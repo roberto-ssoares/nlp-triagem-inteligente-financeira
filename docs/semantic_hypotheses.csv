@@ -1,0 +1,6 @@
+hipotese,descricao
+H1,"Termos relacionados a cobrança, fatura e vencimento tendem a formar grupos semânticos próximos."
+H2,Mensagens de fraude e transação não reconhecida devem apresentar vocabulário distintivo.
+H3,"Categorias operacionais podem ter sobreposição semântica parcial, exigindo revisão de labels."
+H4,Mensagens muito curtas podem reduzir a capacidade discriminativa do modelo.
+H5,Há potencial para priorização adicional com base em palavras de urgência e contexto de risco.

@@ -1,0 +1,8 @@
+origem,relacao,destino
+Cliente,abre,Demanda
+Demanda,refere-se a,Produto
+Demanda,chega por,Canal
+Demanda,recebe,Categoria
+Demanda,recebe,Prioridade
+Demanda,é tratada em,Atendimento
+Demanda,é encaminhada para,Encaminhamento

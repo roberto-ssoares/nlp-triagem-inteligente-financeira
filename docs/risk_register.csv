@@ -1,0 +1,6 @@
+risco,probabilidade,impacto,mitigacao
+Classes sobrepostas,Alta,Alta,Revisar labels e agrupar categorias quando necessário
+Desbalanceamento severo,Alta,Média,Monitorar distribuição e usar métricas adequadas
+Texto muito curto,Média,Média,Inspecionar comprimento e avaliar impacto por classe
+Baixa qualidade de rótulo,Média,Alta,Criar amostra de revisão manual
+Escopo excessivo,Alta,Alta,Manter foco em classificação principal no MVP

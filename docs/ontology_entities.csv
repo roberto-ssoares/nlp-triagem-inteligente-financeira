@@ -1,0 +1,9 @@
+entidade,descricao
+Cliente,"Pessoa que origina a manifestação, reclamação ou solicitação"
+Demanda,"Texto livre contendo a necessidade, problema ou dúvida"
+Produto,Serviço ou produto financeiro ao qual a demanda se refere
+Canal,"Origem da demanda, como app, telefone, e-mail ou chat"
+Categoria,Classe principal atribuída à demanda
+Prioridade,Nível de urgência operacional da demanda
+Atendimento,Fluxo humano ou automatizado de tratamento da demanda
+Encaminhamento,Destino operacional responsável pela tratativa

@@ -1,0 +1,47 @@
+[project]
+name = "nlp-triagem-inteligente-financeira"
+version = "0.1.0"
+description = "Solução end-to-end de NLP para triagem inteligente de demandas textuais no setor financeiro."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.2",
+    "numpy>=1.26.4",
+    "scikit-learn>=1.5.1",
+    "matplotlib>=3.9.0",
+    "seaborn>=0.13.2",
+    "jupyterlab>=4.2.3",
+    "notebook>=7.2.1",
+    "ipywidgets>=8.1.3",
+    "fastapi>=0.112.0",
+    "uvicorn[standard]>=0.30.3",
+    "pydantic>=2.8.2",
+    "python-dotenv>=1.0.1",
+    "joblib>=1.4.2",
+    "loguru>=0.7.2",
+    "transformers>=4.44.0",
+    "datasets>=2.20.0",
+    "torch>=2.4.0",
+    "accelerate>=0.33.0",
+    "sentencepiece>=0.2.0",
+    "evaluate>=0.4.2",
+    "duckdb>=1.0.0",
+    "streamlit>=1.37.0"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
