@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>03_data_preparation__text_cleaning_labeling</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jupyterlab/3.6.3/themes/JupyterLab-light-theme.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@300;400;600&amp;family=Reddit+Sans:wght@300;400;600&amp;family=Courier+Prime:wght@400;700&amp;family=Montserrat:wght@300;400;600;700&amp;family=Source+Code+Pro:wght@400&amp;family=Red+Hat+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'mathjax_process'
+        }
+      };
+    </script>
+<script async="" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+        :root{
+            --bg:#f5f5f5;
+            --paper:#ffffff;
+            --text:#1f2937;
+            --muted:#6b7280;
+            --border:#d9dde3;
+            --shadow:0 4px 12px rgba(0,0,0,.08);
+            --shadow-soft:0 2px 8px rgba(15,23,42,.06);
+            --md-bg:#f3f2ee;
+            --md-accent:#ff9800;
+            --code-bg:#f7f7f7;
+            --code-accent:#4caf50;
+            --out-bg:#f3f9fa;
+            --out-accent:#2196f3;
+            --stream-bg:#eef8ff;
+            --table-head:#f8fafc;
+            --table-zebra:#f6f8fa;
+            --exec-bg:#f7fbff;
+            --exec-border:#2E86C1;
+            --insight-bg:#f8fffb;
+            --insight-border:#22a06b;
+            --warning-bg:#fffaf2;
+            --warning-border:#f59e0b;
+            --danger-bg:#fff6f6;
+            --danger-border:#ef4444;
+            --metric-bg:#ffffff;
+            --metric-border:#d6e7f7;
+        }
+
+        *{ box-sizing:border-box; }
+
+        body{
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            background:var(--bg);
+            padding:40px 0;
+            color:var(--text);
+            line-height:1.55;
+        }
+
+        .container{
+            max-width:1550px;
+            margin:auto;
+            background:var(--paper);
+            padding:20px 30px 28px;
+            border-radius:8px;
+            box-shadow:var(--shadow);
+        }
+
+        .cell{ margin-bottom:10px; }
+
+        h1.title-header{
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            font-weight:700;
+            color:#8eb4c4;
+            text-transform:uppercase;
+            text-align:center;
+            margin:0 0 24px;
+            letter-spacing:.04em;
+        }
+
+        .markdown{
+            background:var(--md-bg);
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            padding:10px 15px;
+            border-left:5px solid var(--md-accent);
+            border-radius:4px;
+            margin:4px 0 8px;
+            line-height:1.6;
+        }
+        .markdown h1,.markdown h2,.markdown h3,.markdown h4,.markdown h5,.markdown h6{
+            margin-top:0;
+            color:#d64545;
+        }
+        .markdown p:last-child,
+        .markdown ul:last-child,
+        .markdown ol:last-child{ margin-bottom:0; }
+
+        img, svg, figure img{
+            max-width:100%;
+            height:auto;
+            display:block;
+            margin-left:auto;
+            margin-right:auto;
+            border:1px solid #ddd;
+            border-radius:6px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        figure{ margin:20px auto; text-align:center; }
+        figure figcaption{ font-size:13px; color:#555; margin-top:6px; }
+
+        .cell-toolbar{
+            display:flex;
+            justify-content:flex-end;
+            margin:0 0 4px;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+        .cell-badge{
+            display:inline-block;
+            background:#eef2f7;
+            border:1px solid #d7dee8;
+            color:#516072;
+            border-radius:999px;
+            font-size:11px;
+            font-weight:600;
+            padding:2px 8px;
+            letter-spacing:.02em;
+        }
+
+        .code_cell{
+            background:var(--code-bg);
+            border-left:5px solid var(--code-accent);
+            padding:6px 8px;
+            margin:4px 0;
+            overflow-x:auto;
+            border-radius:4px;
+        }
+        .code_cell pre,
+        .code_cell .hljs{
+            margin:0;
+            background:transparent !important;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+            white-space:pre;
+        }
+
+        .output-text,
+        .output-stream,
+        .output-error,
+        .output-image,
+        .output-html{
+            margin:4px 0;
+            border-radius:4px;
+            overflow-x:auto;
+        }
+
+        .output-text{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:10px 10px 10px 8px;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+        }
+        .output-text pre{
+            margin:0;
+            white-space:pre-wrap;
+            word-break:break-word;
+            font-family:inherit;
+            font-size:inherit;
+            line-height:inherit;
+        }
+
+        .output-stream{
+            background:var(--stream-bg);
+            border-left:5px solid var(--out-accent);
+            padding:8px 10px;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+        }
+        .output-stream pre{ margin:0; white-space:pre-wrap; word-break:break-word; }
+
+        .output-image{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:10px;
+        }
+
+        .output-html{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:8px 10px;
+            color:var(--text);
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            line-height:1.55;
+            white-space:normal;
+        }
+        .output-html *{ white-space:normal; word-break:normal; max-width:100%; }
+        .output-html p{ margin:0 0 10px; }
+        .output-html p:last-child{ margin-bottom:0; }
+        .output-html h1,.output-html h2,.output-html h3,.output-html h4,.output-html h5,.output-html h6{
+            margin:0 0 10px;
+            color:var(--text);
+            line-height:1.3;
+        }
+        .output-html ul,
+        .output-html ol{ margin:0 0 10px 20px; padding-left:12px; }
+        .output-html li{ margin-bottom:4px; }
+        .output-html li:last-child{ margin-bottom:0; }
+        .output-html code{ font-family:'Red Hat Mono','Noto Sans Mono',monospace; font-size:.95em; }
+        .output-html pre{
+            white-space:pre-wrap;
+            word-break:break-word;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.5;
+            margin:0;
+        }
+
+        .table-output{ padding:8px 10px; }
+        .table-output table,
+        .table-output table.dataframe{
+            border-collapse:collapse;
+            border-spacing:0;
+            width:auto;
+            max-width:100%;
+            margin:0;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.45;
+            color:#263238;
+            background:#fff;
+        }
+        .table-output table th,
+        .table-output table td,
+        .table-output table.dataframe th,
+        .table-output table.dataframe td{
+            padding:8px 10px;
+            border:1px solid var(--border);
+            vertical-align:top;
+            text-align:left;
+        }
+        .table-output table thead,
+        .table-output table.dataframe thead{ background:var(--table-head); font-weight:600; }
+        .table-output table tbody tr:nth-child(even),
+        .table-output table.dataframe tbody tr:nth-child(even){ background:var(--table-zebra); }
+        .table-output .dataframe tbody tr:hover,
+        .table-output table tbody tr:hover{ background:#eef6ff; }
+
+        /* Premium HTML blocks */
+        .output-html .executive-card,
+        .output-html .insight-card,
+        .output-html .warning-card,
+        .output-html .danger-card,
+        .output-html .summary-card{
+            border-radius:10px;
+            padding:14px 16px;
+            box-shadow:var(--shadow-soft);
+            border:1px solid #dbe5ef;
+            margin:4px 0;
+        }
+        .output-html .executive-card{
+            background:var(--exec-bg);
+            border-left:6px solid var(--exec-border);
+        }
+        .output-html .summary-card{
+            background:#f8fbff;
+            border-left:6px solid #64748b;
+        }
+        .output-html .insight-card{
+            background:var(--insight-bg);
+            border-left:6px solid var(--insight-border);
+        }
+        .output-html .warning-card{
+            background:var(--warning-bg);
+            border-left:6px solid var(--warning-border);
+        }
+        .output-html .danger-card{
+            background:var(--danger-bg);
+            border-left:6px solid var(--danger-border);
+        }
+        .output-html .card-title{
+            margin:0 0 10px;
+            font-size:20px;
+            font-weight:700;
+            color:#1f2937;
+            line-height:1.25;
+        }
+        .output-html .card-subtitle{
+            margin:0 0 12px;
+            font-size:13px;
+            font-weight:600;
+            color:#64748b;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .output-html .card-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+            gap:10px;
+            margin:10px 0 12px;
+        }
+        .output-html .metric-card{
+            background:var(--metric-bg);
+            border:1px solid var(--metric-border);
+            border-radius:10px;
+            padding:10px 12px;
+            min-height:82px;
+            box-shadow:0 1px 3px rgba(15,23,42,.05);
+        }
+        .output-html .metric-label{
+            display:block;
+            margin:0 0 6px;
+            font-size:12px;
+            font-weight:700;
+            color:#64748b;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .output-html .metric-value{
+            display:block;
+            font-size:24px;
+            font-weight:700;
+            line-height:1.15;
+            color:#0f172a;
+        }
+        .output-html .metric-note{
+            display:block;
+            margin-top:4px;
+            font-size:12px;
+            color:#6b7280;
+        }
+        .output-html .chip-row{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            margin:8px 0 10px;
+        }
+        .output-html .chip{
+            display:inline-flex;
+            align-items:center;
+            background:#edf4ff;
+            border:1px solid #d8e6ff;
+            color:#2457a6;
+            border-radius:999px;
+            padding:4px 10px;
+            font-size:12px;
+            font-weight:600;
+        }
+        .output-html .callout-compact p{ margin-bottom:8px; }
+        .output-html .callout-compact ul,
+        .output-html .callout-compact ol{ margin-bottom:8px; }
+
+        .output-error{
+            background:#fff5f5;
+            border-left:5px solid #ef4444;
+            padding:10px 12px;
+            color:#7f1d1d;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.5;
+        }
+        .output-error pre{ margin:8px 0 0; white-space:pre-wrap; word-break:break-word; }
+
+        .hidden-note{
+            margin:4px 0;
+            padding:6px 10px;
+            border-radius:6px;
+            background:#f8fafc;
+            border:1px dashed #cbd5e1;
+            color:#64748b;
+            font-size:12px;
+            font-weight:600;
+        }
+
+        .footer{
+            text-align:right;
+            margin-top:30px;
+            padding:12px;
+            background:#e9ecef;
+            border-radius:4px;
+            font-size:14px;
+            color:#555;
+        }
+
+        @media (max-width: 768px) {
+            body{ padding:16px 0; }
+            .container{ max-width:100%; padding:14px 16px 20px; border-radius:0; }
+            .output-html,
+            .output-text,
+            .output-stream,
+            .output-image,
+            .output-error,
+            .markdown,
+            .code_cell{ padding-left:10px; padding-right:10px; }
+            .output-html .card-title{ font-size:18px; }
+            .output-html .metric-value{ font-size:20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1 class="title-header">03_data_preparation__text_cleaning_labeling</h1>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#F3F2EE">
+<br/><br/>
+<p style="text-align: center;">
+<font color="#0A1781" size="6">
+<strong>
+                    NLP Triagem Inteligente Financeira - Data Science Project
+                </strong>
+</font>
+</p>
+<p style="text-align: center;">
+<font color="#C58A1E" size="6">
+<strong>
+                    Data Preparation | Text Cleaning + Labeling
+                </strong>
+</font>
+</p>
+<p style="text-align: center;">
+<font color="#C58A1E" size="5">
+<strong>
+                    Preparar o dataset textual para modelagem, realizando limpeza controlada dos textos,<br/>padronização dos rótulos, tratamento de duplicidades relevantes<br/>e geração das camadas silver e gold para os próximos notebooks.
+                </strong>
+</font>
+</p>
+<br/>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#F3F2EE">
+<p style="text-align: right;">
+<font color="#444444" size="4">
+            Roberto SSoares - LfLngLrnng
+      </font>
+</p>
+<p style="text-align: right;"><font color="#444444" size="2">
+<a href="https://www.linkedin.com/in/roberto-dos-santos-soares/">in/roberto-dos-santos-soares</a><br/><a href="https://roberto-ssoares.github.io/meu-portfolio/">Portifólio: roberto-ssoares</a>
+</font></p>
+<p style="text-align: right;">
+<font color="#444444" size="4">
+            " [+] Faturamento [-] Custo [+] Qualidade de vida "
+        </font>
+<br/>
+<font color="#918e8e" size="2">"Mestre Bruno Jardim"
+        </font>
+</p>
+<p style="text-align: right;">
+<font color="#918e8e" size="2">
+</font>
+</p>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>📌 Objetivo:</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Ações realizadas neste notebook</strong><ul>
+<li>Leitura da base bronze</li>
+<li>Seleção e padronização das colunas principais</li>
+<li>Avaliação de nulos e textos vazios</li>
+<li>Tratamento de duplicidades</li>
+<li>Criação de versão textual preparada para baseline</li>
+<li>Preservação do texto original para uso futuro com transformer</li>
+<li>Padronização de labels</li>
+<li>Geração de split de validação</li>
+<li>Exportação das bases silver e gold</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>Em NLP aplicado, a preparação dos dados precisa equilibrar limpeza e preservação semântica.</li>
+<li>Limpeza excessiva pode remover sinal útil; limpeza insuficiente pode aumentar ruído.</li>
+<li>Esta etapa busca criar uma base consistente para o baseline com TF-IDF + Logistic Regression, preservando também uma versão adequada para modelos mais avançados.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Base pronta para modelagem clássica</li>
+<li>Texto original preservado para transformer</li>
+<li>Labels consistentes</li>
+<li>Split de treino, validação e teste definido</li>
+<li>Arquivos organizados em silver e gold</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📚 Instalando e Carregando os Pacotes¶</strong></font></p>
+<p><font color="#66666" size="3"></font></p></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">import warnings
+warnings.filterwarnings("ignore")
+
+from pathlib import Path
+import json
+import re
+import unicodedata
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 1. Caminhos de Diretórios</strong></font></p>
+<p><font color="#66666" size="2"></font></p></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">PROJECT_ROOT = Path.cwd().resolve().parents[0]
+DATA_DIR = PROJECT_ROOT / "data"
+
+BRONZE_DIR = DATA_DIR / "01-bronze"
+SILVER_DIR = DATA_DIR / "02-silver"
+GOLD_DIR = DATA_DIR / "03-gold"
+
+DOCS_DIR = PROJECT_ROOT / "docs"
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+REPORTS_DIR = ARTIFACTS_DIR / "reports"
+
+SILVER_DIR.mkdir(parents=True, exist_ok=True)
+GOLD_DIR.mkdir(parents=True, exist_ok=True)
+DOCS_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+print("PROJECT_ROOT:", PROJECT_ROOT)
+print("BRONZE_DIR  :", BRONZE_DIR)
+print("SILVER_DIR  :", SILVER_DIR)
+print("GOLD_DIR    :", GOLD_DIR)
+print("DOCS_DIR    :", DOCS_DIR)
+print("REPORTS_DIR :", REPORTS_DIR)</code></pre>
+</div>
+<div class="output-stream">
+<pre>PROJECT_ROOT: D:\_DS-Projects\nlp-triagem-inteligente-financeira
+BRONZE_DIR  : D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\01-bronze
+SILVER_DIR  : D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\02-silver
+GOLD_DIR    : D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold
+DOCS_DIR    : D:\_DS-Projects\nlp-triagem-inteligente-financeira\docs
+REPORTS_DIR : D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 2. Leitura da base bronze</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Nesta etapa carregamos a base gerada no Notebook 02.<ul>
+<li>Para evitar dependência desnecessária de parquet, a leitura principal será feita a partir do CSV da camada bronze.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">bronze_csv_path = BRONZE_DIR / "faq_bacen_bronze.csv"
+
+df = pd.read_csv(bronze_csv_path)
+
+print("Shape da base bronze:", df.shape)
+df.head()</code></pre>
+</div>
+<div class="output-stream">
+<pre>Shape da base bronze: (1678, 9)
+</pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>Unnamed: 0</th>
+<th>question</th>
+<th>category</th>
+<th>answer</th>
+<th>split</th>
+<th>question_num_chars</th>
+<th>question_num_words</th>
+<th>answer_num_chars</th>
+<th>answer_num_words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>0</td>
+<td>Quais são as condições dos Créditos para Benef...</td>
+<td>Programa Nacional de Fortalecimento da Agricul...</td>
+<td>Os créditos para Beneficiários do PNCF e PNRA ...</td>
+<td>train</td>
+<td>70</td>
+<td>12</td>
+<td>1244</td>
+<td>197</td>
+</tr>
+<tr>
+<th>1</th>
+<td>1</td>
+<td>Quais são os principais tipos de operações de ...</td>
+<td>Empréstimo, financiamento e arrendamento merca...</td>
+<td>Empréstimo, financiamento e arrendamento merca...</td>
+<td>train</td>
+<td>54</td>
+<td>9</td>
+<td>837</td>
+<td>124</td>
+</tr>
+<tr>
+<th>2</th>
+<td>2</td>
+<td>Quais os prazos para pagamento de cheques?</td>
+<td>SEM-CATEGORIA</td>
+<td>Existem dois prazos que devem ser observados:p...</td>
+<td>train</td>
+<td>42</td>
+<td>7</td>
+<td>711</td>
+<td>125</td>
+</tr>
+<tr>
+<th>3</th>
+<td>3</td>
+<td>Quem pode se associar a uma cooperativa de cré...</td>
+<td>Cooperativas de crédito  Como me associar a um...</td>
+<td>O ingresso nas cooperativas é livre a todos qu...</td>
+<td>train</td>
+<td>51</td>
+<td>9</td>
+<td>499</td>
+<td>73</td>
+</tr>
+<tr>
+<th>4</th>
+<td>4</td>
+<td>Quem é responsável pelos dados inseridos no SCR?</td>
+<td>Sistema de Informações de Créditos (SCR) Respo...</td>
+<td>A responsabilidade pelos dados dos clientes é ...</td>
+<td>train</td>
+<td>48</td>
+<td>8</td>
+<td>293</td>
+<td>44</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">df.columns.tolist()</code></pre>
+</div>
+<div class="output-text">
+<pre>['Unnamed: 0',
+ 'question',
+ 'category',
+ 'answer',
+ 'split',
+ 'question_num_chars',
+ 'question_num_words',
+ 'answer_num_chars',
+ 'answer_num_words']</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 3. Seleção das colunas relevantes</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Para o MVP, vamos trabalhar com as colunas:<ul>
+<li><code>question</code>: texto principal de entrada</li>
+<li><code>category</code>: target principal</li>
+<li><code>answer</code>: conteúdo útil para futuras extensões</li>
+<li><code>split</code>: partição original do dataset</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">required_columns = ["question", "category", "answer", "split"]
+missing_columns = [col for col in required_columns if col not in df.columns]
+
+if missing_columns:
+    raise ValueError(f"Colunas ausentes na base bronze: {missing_columns}")
+
+df_prep = df[required_columns].copy()
+
+print("Shape inicial de df_prep:", df_prep.shape)
+df_prep.head()</code></pre>
+</div>
+<div class="output-stream">
+<pre>Shape inicial de df_prep: (1678, 4)
+</pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question</th>
+<th>category</th>
+<th>answer</th>
+<th>split</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Quais são as condições dos Créditos para Benef...</td>
+<td>Programa Nacional de Fortalecimento da Agricul...</td>
+<td>Os créditos para Beneficiários do PNCF e PNRA ...</td>
+<td>train</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Quais são os principais tipos de operações de ...</td>
+<td>Empréstimo, financiamento e arrendamento merca...</td>
+<td>Empréstimo, financiamento e arrendamento merca...</td>
+<td>train</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Quais os prazos para pagamento de cheques?</td>
+<td>SEM-CATEGORIA</td>
+<td>Existem dois prazos que devem ser observados:p...</td>
+<td>train</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Quem pode se associar a uma cooperativa de cré...</td>
+<td>Cooperativas de crédito  Como me associar a um...</td>
+<td>O ingresso nas cooperativas é livre a todos qu...</td>
+<td>train</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Quem é responsável pelos dados inseridos no SCR?</td>
+<td>Sistema de Informações de Créditos (SCR) Respo...</td>
+<td>A responsabilidade pelos dados dos clientes é ...</td>
+<td>train</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">for col in ["question", "category", "answer", "split"]:
+    df_prep[col] = df_prep[col].astype(str).str.strip()
+
+df_prep.info()</code></pre>
+</div>
+<div class="output-stream">
+<pre><class 'pandas.dataframe'="">
+RangeIndex: 1678 entries, 0 to 1677
+Data columns (total 4 columns):
+ #   Column    Non-Null Count  Dtype
+---  ------    --------------  -----
+ 0   question  1678 non-null   str  
+ 1   category  1678 non-null   str  
+ 2   answer    1678 non-null   str  
+ 3   split     1678 non-null   str  
+dtypes: str(4)
+memory usage: 1.1 MB
+</class></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 4. Nulos lógicos e textos vazios</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Mesmo após leitura bem-sucedida, precisamos verificar registros vazios ou com conteúdo insuficiente nas colunas essenciais.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">empty_summary = pd.DataFrame(
+    {
+        "coluna": ["question", "category", "answer", "split"],
+        "qtd_vazios": [
+            (df_prep["question"] == "").sum(),
+            (df_prep["category"] == "").sum(),
+            (df_prep["answer"] == "").sum(),
+            (df_prep["split"] == "").sum(),
+        ],
+    }
+)
+
+empty_summary["pct_vazios"] = (empty_summary["qtd_vazios"] / len(df_prep) * 100).round(2)
+empty_summary</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>coluna</th>
+<th>qtd_vazios</th>
+<th>pct_vazios</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>question</td>
+<td>0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>1</th>
+<td>category</td>
+<td>0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>2</th>
+<td>answer</td>
+<td>0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>split</td>
+<td>0</td>
+<td>0.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">before_drop_shape = df_prep.shape
+
+df_prep = df_prep[
+    (df_prep["question"] != "") &amp;
+    (df_prep["category"] != "") &amp;
+    (df_prep["split"] != "")
+].copy()
+
+after_drop_shape = df_prep.shape
+
+print("Shape antes da remoção:", before_drop_shape)
+print("Shape depois da remoção:", after_drop_shape)
+print("Registros removidos:", before_drop_shape[0] - after_drop_shape[0])</code></pre>
+</div>
+<div class="output-stream">
+<pre>Shape antes da remoção: (1678, 4)
+Shape depois da remoção: (1678, 4)
+Registros removidos: 0
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 5. Duplicidades</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Nesta etapa medimos duplicidades relevantes e removemos duplicatas exatas completas.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Decisão do MVP:<ul>
+<li>remover duplicidade exata em <code>question + category + answer + split</code></li>
+<li>manter casos semanticamente parecidos para análise futura</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">dup_summary_before = pd.DataFrame(
+    {
+        "criterio": [
+            "question",
+            "question + category",
+            "question + category + answer",
+            "question + category + answer + split",
+        ],
+        "qtd_duplicados": [
+            df_prep.duplicated(subset=["question"]).sum(),
+            df_prep.duplicated(subset=["question", "category"]).sum(),
+            df_prep.duplicated(subset=["question", "category", "answer"]).sum(),
+            df_prep.duplicated(subset=["question", "category", "answer", "split"]).sum(),
+        ],
+    }
+)
+
+dup_summary_before</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>criterio</th>
+<th>qtd_duplicados</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>question</td>
+<td>0</td>
+</tr>
+<tr>
+<th>1</th>
+<td>question + category</td>
+<td>0</td>
+</tr>
+<tr>
+<th>2</th>
+<td>question + category + answer</td>
+<td>0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>question + category + answer + split</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">rows_before_dedup = len(df_prep)
+
+df_prep = df_prep.drop_duplicates(
+    subset=["question", "category", "answer", "split"]
+).copy()
+
+rows_after_dedup = len(df_prep)
+
+print("Linhas antes do drop_duplicates:", rows_before_dedup)
+print("Linhas depois do drop_duplicates:", rows_after_dedup)
+print("Duplicatas exatas removidas:", rows_before_dedup - rows_after_dedup)</code></pre>
+</div>
+<div class="output-stream">
+<pre>Linhas antes do drop_duplicates: 1678
+Linhas depois do drop_duplicates: 1678
+Duplicatas exatas removidas: 0
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 6. Limpeza textual controlada</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>A estratégia de limpeza será conservadora.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>O que faremos</strong><ul>
+<li><em>lowercase</em></li>
+<li><em>remoção de espaços excedentes</em></li>
+<li><em>normalização Unicode</em></li>
+<li><em>remoção de acentos para a versão de baseline</em></li>
+<li><em>remoção controlada de pontuação</em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>O que não faremos agora</strong><ul>
+<li>stemming</li>
+<li>lemmatization</li>
+<li>remoção agressiva de stopwords</li>
+<li>remoção de números de forma indiscriminada</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Essa decisão preserva melhor o sinal do domínio financeiro.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">def strip_accents(text: str) -&gt; str:
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def normalize_whitespace(text: str) -&gt; str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def remove_punctuation_keep_alnum(text: str) -&gt; str:
+    return re.sub(r"[^\w\s]", " ", text)
+
+
+def clean_text_for_baseline(text: str) -&gt; str:
+    text = str(text)
+    text = text.strip().lower()
+    text = strip_accents(text)
+    text = remove_punctuation_keep_alnum(text)
+    text = normalize_whitespace(text)
+    return text
+
+
+def clean_text_light(text: str) -&gt; str:
+    text = str(text)
+    text = text.strip().lower()
+    text = normalize_whitespace(text)
+    return text</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">df_prep["question_raw"] = df_prep["question"].astype(str)
+df_prep["question_clean_light"] = df_prep["question_raw"].apply(clean_text_light)
+df_prep["question_clean"] = df_prep["question_raw"].apply(clean_text_for_baseline)
+
+df_prep["question_raw_num_words"] = df_prep["question_raw"].str.split().str.len()
+df_prep["question_clean_num_words"] = df_prep["question_clean"].str.split().str.len()
+
+df_prep[["question_raw", "question_clean_light", "question_clean"]].head(10)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question_raw</th>
+<th>question_clean_light</th>
+<th>question_clean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Quais são as condições dos Créditos para Benef...</td>
+<td>quais são as condições dos créditos para benef...</td>
+<td>quais sao as condicoes dos creditos para benef...</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Quais são os principais tipos de operações de ...</td>
+<td>quais são os principais tipos de operações de ...</td>
+<td>quais sao os principais tipos de operacoes de ...</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Quais os prazos para pagamento de cheques?</td>
+<td>quais os prazos para pagamento de cheques?</td>
+<td>quais os prazos para pagamento de cheques</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Quem pode se associar a uma cooperativa de cré...</td>
+<td>quem pode se associar a uma cooperativa de cré...</td>
+<td>quem pode se associar a uma cooperativa de cre...</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Quem é responsável pelos dados inseridos no SCR?</td>
+<td>quem é responsável pelos dados inseridos no scr?</td>
+<td>quem e responsavel pelos dados inseridos no scr</td>
+</tr>
+<tr>
+<th>5</th>
+<td>Autoridades públicas como juízes, promotores e...</td>
+<td>autoridades públicas como juízes, promotores e...</td>
+<td>autoridades publicas como juizes promotores e ...</td>
+</tr>
+<tr>
+<th>6</th>
+<td>Quais os principais tipos de aplicação finance...</td>
+<td>quais os principais tipos de aplicação finance...</td>
+<td>quais os principais tipos de aplicacao finance...</td>
+</tr>
+<tr>
+<th>7</th>
+<td>Como iniciar a declaração?</td>
+<td>como iniciar a declaração?</td>
+<td>como iniciar a declaracao</td>
+</tr>
+<tr>
+<th>8</th>
+<td>Qual o fundamento do processo administrativo s...</td>
+<td>qual o fundamento do processo administrativo s...</td>
+<td>qual o fundamento do processo administrativo s...</td>
+</tr>
+<tr>
+<th>9</th>
+<td>Sou imigrante e solicitei refúgio no Brasil. P...</td>
+<td>sou imigrante e solicitei refúgio no brasil. p...</td>
+<td>sou imigrante e solicitei refugio no brasil po...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">sample_compare = df_prep[["question_raw", "question_clean"]].sample(10, random_state=42)
+sample_compare</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question_raw</th>
+<th>question_clean</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>1601</th>
+<td>Além de decretar e acompanhar o regime de reso...</td>
+<td>alem de decretar e acompanhar o regime de reso...</td>
+</tr>
+<tr>
+<th>482</th>
+<td>Moro no Brasil e possuo aqui uma conta em reai...</td>
+<td>moro no brasil e possuo aqui uma conta em reai...</td>
+</tr>
+<tr>
+<th>203</th>
+<td>Fiz uma compra em moeda estrangeira pelo cartã...</td>
+<td>fiz uma compra em moeda estrangeira pelo carta...</td>
+</tr>
+<tr>
+<th>49</th>
+<td>Se eu não tiver acesso à internet, é possível ...</td>
+<td>se eu nao tiver acesso a internet e possivel f...</td>
+</tr>
+<tr>
+<th>1290</th>
+<td>Como faço para consultar meus dados em determi...</td>
+<td>como faco para consultar meus dados em determi...</td>
+</tr>
+<tr>
+<th>481</th>
+<td>O que ocorre se meu cadastro for cancelado?</td>
+<td>o que ocorre se meu cadastro for cancelado</td>
+</tr>
+<tr>
+<th>1666</th>
+<td>Posso registrar ou fazer alguma alteração na m...</td>
+<td>posso registrar ou fazer alguma alteracao na m...</td>
+</tr>
+<tr>
+<th>611</th>
+<td>Todos os relacionamentos do CCS fazem parte do...</td>
+<td>todos os relacionamentos do ccs fazem parte do...</td>
+</tr>
+<tr>
+<th>1623</th>
+<td>Deve ser realizado contrato de câmbio para as ...</td>
+<td>deve ser realizado contrato de cambio para as ...</td>
+</tr>
+<tr>
+<th>518</th>
+<td>Como pago a multa por entrega em atraso da dec...</td>
+<td>como pago a multa por entrega em atraso da dec...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">df_prep[["question_raw_num_words", "question_clean_num_words"]].describe()</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question_raw_num_words</th>
+<th>question_clean_num_words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>count</th>
+<td>1678.000000</td>
+<td>1678.000000</td>
+</tr>
+<tr>
+<th>mean</th>
+<td>11.555423</td>
+<td>11.614422</td>
+</tr>
+<tr>
+<th>std</th>
+<td>5.299067</td>
+<td>5.344736</td>
+</tr>
+<tr>
+<th>min</th>
+<td>1.000000</td>
+<td>1.000000</td>
+</tr>
+<tr>
+<th>25%</th>
+<td>8.000000</td>
+<td>8.000000</td>
+</tr>
+<tr>
+<th>50%</th>
+<td>11.000000</td>
+<td>11.000000</td>
+</tr>
+<tr>
+<th>75%</th>
+<td>14.000000</td>
+<td>14.000000</td>
+</tr>
+<tr>
+<th>max</th>
+<td>42.000000</td>
+<td>42.000000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">plt.figure(figsize=(10, 5))
+plt.hist(df_prep["question_clean_num_words"], bins=30)
+plt.title("Distribuição do número de palavras — texto limpo para baseline")
+plt.xlabel("Número de palavras")
+plt.ylabel("Frequência")
+plt.tight_layout()
+plt.show()</code></pre>
+</div>
+<div class="output-image text-center">
+<img alt="Graph" class="img-fluid mx-auto d-block" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA94AAAHqCAYAAADyGZa5AAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjgsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvwVt1zgAAAAlwSFlzAAAPYQAAD2EBqD+naQAASWRJREFUeJzt3QeYVOW9P/CXLiJFUEACii32csVG7BWVeC0Yu6IhmoJGMRZILNEYMZrYC8m9iS322KJGjSK2iDWxRrFEBS8gJiqgBqTM//m99z97Z5ddyrJnF9jP53mGZc6cOefMmXNmznfe1qJUKpUSAAAAUIiWxSwWAAAAELwBAACgYEq8AQAAoECCNwAAABRI8AYAAIACCd4AAABQIMEbAAAACiR4AwAAQIEEbwAAACiQ4A1AvX355ZfpZz/7WRo9erS9CABQB8EbWCQ//elPU4sWLRplr+244475VvbYY4/ldf/hD39osHW8//77eZnXXnvtIj83tqNLly5pm222SW+//XY69thj0yWXXJIaQ2xzvBdN7fvf/366884705Zbbpmai5rH5ZJoSTk+aDzlz8f4W3bUUUelvn37ehsKVP4O+eUvf7lE7uf4bovti+1cmj7DYFkkeEMzVv5CLt+WW2651KtXrzRgwIB02WWXpenTpzfIeiZOnJhDwEsvvZSWJRdccEEO26usskpad911cwDdd999U3Px29/+Nj3++OPpT3/6U+rYsWNTbw4sljiOG+PHimX18xCA+Wu9gMeBZuCcc85Jq6++epo1a1aaPHlyLjE58cQT00UXXZT++Mc/po033rhq3tNPPz0NHz58kS80zz777Fzysummmy708/785z+noq222mrp3//+d2rTps0iP/f2229PX/va11Lr1q3Txx9/nMNn/HjRHMyZMyf961//Sg8++GD+4QGWheB95ZVXFh6+6/t5WB//9V//lebOnVvoOlj6NMZ3KzAvwRtIe+65Z9p8882r9sSIESPSo48+mr75zW+m//zP/0xvvPFGat++/f9+aLRunW9FtxtefvnlU9u2bQt/d8ol/fUN7WUrr7xyak5atWqVTj311LSk+uKLL1KHDh2aejOaFft8yVOfHxSbk+Z6zDbGdyswL1XNgVrtvPPO6YwzzkgffPBB+v3vfz/fNt4PP/xw2nbbbXN75xVWWCGts8466cc//nF+LErPt9hii/z/o48+uqpae7lNdbQz23DDDdOLL76Ytt9++xy4y8+tqx1alLbGPD179swXTfHjwIQJE6rNE6VJ0b6xpprLrKuN95tvvpkOPPDAHKjjR4d4TT/5yU+qHn/vvfdy++avf/3r+fFu3bqlb33rW9Xa0ZX94x//yI917do1v76tt9463X///Qt15M2cOTMNGzYsb0eUqMdr/fDDD2ud929/+1v+EaVTp075fdhll13SM888s0htFH/zm9+kNddcM7Vr1y6/b88///x8919dbUkrlxmliGussUZ+7bvvvnt+r0qlUu6UrXfv3nn/7bPPPumTTz6ZZ7kPPPBA2m677fL7HK9/4MCB6fXXX59n3fF633333bTXXnvl+Q477LCqC+sf/ehHqU+fPvk1xfsY2xTrXxjl/RHbGO3Yn3zyyTrfp7POOiuttdZaeT2xvvhhIqYvSOU58I1vfCOvK2qgjBo1qtp8X331VTrzzDNTv379UufOnfM+iX0zZsyYBa4jzuMf/OAH+fXXdby+8MIL+T277rrr5nn+Qw89lB+77777qn0O/P3vf0+HHnpoWnHFFfNnQHjllVfyexLvefyoFefpt7/97VxDolI0ZYmaNXHcxD7r3r172m233dJf//rX1Nhie+M4DZXNb8qi1Dj6b9hggw3ya+rRo0f67ne/mz799NOqeeL9b9my5TwdDUZzlAg6L7/88gI/D8s1aeI9jvdppZVWSocffnj6n//5n3q/roY+L2N58aNslJpGiX3sj/XXXz83tWnIz77YzuOOOy7deOON+biN9cR+eeKJJxb52K5sWhXNY2L+ON7idS7KMhbk4osvzj/IxjJ22GGH9Nprr1V7vKHPjWeffTbtscce+fMg9m+s8y9/+Uu9+0+57bbb0s9//vO8X2L74jvknXfemef59V0vNHdKvIE6HXHEETngxgXWMcccU+s8EYLiIiyqo0eV9bhIiC/q8pfweuutl6dHYIgL0AgKIQJGWVx0RGA8+OCD80VmXNTOT1wYxEXCaaedlqZMmZIviHfdddfcZrJcMr844uIotjNKi2Kb4+InQt29996b112+8Bg7dmw65JBD8kVKBPEISnExE2EkLkbCRx99lF9rlOL/8Ic/zBd0EWwiQEfnbPvtt998t+U73/lO/uEjwk0sJ2oiRPis7X2IbY7QHYEvtv3Xv/513p640Nxqq60W+LpvuummfMEXgSL2b7Rh33///fPFc31LzuKiOQLj8ccfny/gY5nxg0b8sBMXe/EexvFy+eWXp5NPPjn97ne/q3ruDTfckAYPHpz7HPjFL36R9+HVV1+dA178yFAZKGbPnp3ni8ciVMT+jxAR+zmC6ZAhQ3JIiAB5yimn5CATF8kLasMe+yL2e1wEx36I5UWIiGBdGcpi+lNPPZWPlzjmX3311bz8t956K919990L3E8R4OJHg9g3cUzFBXD8sBOBLS7Mw7Rp09J///d/58fjfIz3KrYxXvdzzz0332rL8QPK008/nc+xOF4jUMS+rDxeo9ZLBIJYd+z3SrfeemsO17GuShFO1l577XTeeedV/ZgRP8TFvopgGcEijs34ASP+xg9B5UD7ve99L58DEa4iuMXnQOzDqGGz2WabpcYU73NUAY9tj+OutscjuMVrivM4zvcrrrgiH4fxWRfnRzTDic+IONbi/Y8fgOJ4i+reEWY32WST/Hkwv8/D8joinI8cOTLPf+mll+Z1xLrix82GsDjnZYjOJA866KD8Hsaxcs011+RjIZqeREBsiM++EJ9dcezF8+O75aqrrsqBL473+LFqYY/tShGw44fMeA/ih7n6LKM2119/fT4nhw4dmmbMmJHft9ifcSyUv9Ma8tyI74L43owfI8o/+sT7EOuMHwjr0+Hl+eefn5cT7/nUqVPzcRE/Ysb3XVkR64VmowQ0W9dcc01cKZeef/75Oufp3Llz6T/+4z+q7p911ln5OWUXX3xxvv/xxx/XuYxYfswT66tphx12yI+NGjWq1sfiVjZmzJg879e+9rXStGnTqqbfdtttefqll15aNW211VYrDR48eIHLfO+99+bZtu23377UsWPH0gcffFDtuXPnzq36/5dffjnPsseOHZuXdf3111dNO/HEE/O0J598smra9OnTS6uvvnqpb9++pTlz5pTq8tJLL+Xn/uAHP6g2/dBDD83T470o23fffUtt27Ytvfvuu1XTJk6cmF9HvJ75Ke+Dbt26lT755JOq6ffcc0+efu+999a5/8piX8c+r7nMlVdeufTZZ59VTR8xYkSevskmm5RmzZpVNf2QQw7J2z9jxoyqfdSlS5fSMcccU209kydPzsdk5fRYdyxz+PDh1ea9++678/Rzzz232vQDDjig1KJFi9I777xT5z75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tfnzn/+cg/ojjzySevTokTbddNP0s5/9LJ122mnppz/9aWrbtm3hrwMAAACWijbeU6dOzX+7du1abfqNN96YVlpppbThhhumESNGpC+//LLqsbFjx6aNNtooh+6yAQMGpGnTpqXXX3+9EbceAAAAlrAS70pz585NJ554Ytpmm21ywC479NBD02qrrZZ69eqVXnnllVySHe3A77zzzvz45MmTq4XuUL4fj9Vm5syZ+VYWIR0AAACW6eAdbb1fe+219NRTT1Wbfuyxx1b9P0q2V1lllbTLLrukd999N6255pr17tTt7LPPXuxtBgAAgKWiqvlxxx2X7rvvvjRmzJjUu3fv+c671VZb5b/vvPNO/httvz/66KNq85Tv19UuPKqrR7X28m3ChAkN9EoAAABgCSrxLpVK6fjjj0933XVXeuyxx9Lqq6++wOe89NJL+W+UfIf+/funn//852nKlCm5Y7bw8MMPp06dOqX111+/1mW0a9cu3wAWpO/w+xt1J71//sBGXR8AAMt48I7q5TfddFO655578lje5TbZnTt3Tu3bt8/VyePxvfbaK3Xr1i238R42bFju8XzjjTfO88bwYxGwjzjiiHTBBRfkZZx++ul52cI1AAAAzbqq+dVXX52reu+44465BLt8u/XWW/PjMRRYDBMW4XrddddNP/rRj9KgQYPSvffeW7WMVq1a5Wrq8TdKvw8//PA8jnfluN8AAADQbKuaz0+fPn3S448/vsDlRK/nf/rTnxpwywAAAGAZ6lwNAAAAllWCNwAAABRI8AYAAIACCd4AAABQIMEbAAAACiR4AwAAQIEEbwAAACiQ4A0AAAAFErwBAACgQII3AAAAFEjwBgAAgAIJ3gAAAFAgwRsAAAAKJHgDAABAgQRvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUSPAGAACAAgneAAAAUCDBGwAAAAokeAMAAECBBG8AAAAokOANAAAABRK8AQAAoECCNwAAABRI8AYAAIACCd4AAABQIMEbAAAACiR4AwAAQIEEbwAAACiQ4A0AAAAFErwBAACgQII3AAAAFEjwBgAAAMEbAAAAlk5KvAEAAKBAgjcAAAAUSPAGAACAAgneAAAAUCDBGwAAAAokeAMAAECBBG8AAAAokOANAAAABRK8AQAAoECCNwAAABRI8AYAAIACCd4AAACwrAbvkSNHpi222CJ17Ngxde/ePe27775p3Lhx1eaZMWNGGjp0aOrWrVtaYYUV0qBBg9JHH31UbZ7x48engQMHpuWXXz4v55RTTkmzZ89u5FcDAAAAS1jwfvzxx3OofuaZZ9LDDz+cZs2alXbffff0xRdfVM0zbNiwdO+996bbb789zz9x4sS0//77Vz0+Z86cHLq/+uqr9PTTT6frrrsuXXvttenMM89solcFAAAA/6dFqVQqpSXExx9/nEusI2Bvv/32aerUqWnllVdON910UzrggAPyPG+++WZab7310tixY9PWW2+dHnjggfTNb34zB/IePXrkeUaNGpVOO+20vLy2bdsucL3Tpk1LnTt3zuvr1KlT4a8TitZ3+P2NupPfP39gWlbZlwAALG6OXKLaeMcGh65du+a/L774Yi4F33XXXavmWXfdddOqq66ag3eIvxtttFFV6A4DBgzIO+H1119v9NcAAAAAlVqnJcTcuXPTiSeemLbZZpu04YYb5mmTJ0/OJdZdunSpNm+E7HisPE9l6C4/Xn6sNjNnzsy3sgjpAAAAUIQlpsQ72nq/9tpr6ZZbbmmUTt2iSkD51qdPn8LXCQAAQPO0WCXeL7zwQrrttttyr+LRuVmlO++8c6GXc9xxx6X77rsvPfHEE6l3795V03v27JmX+9lnn1Ur9Y5ezeOx8jzPPfdcteWVez0vz1PTiBEj0kknnVStxFv4BgAAYIkq8Y6S6W984xvpjTfeSHfddVduix1tqh999NFcirwwol+3CN3x/Hje6quvXu3xfv36pTZt2qTRo0dXTYvhxiLo9+/fP9+Pv6+++mqaMmVK1TzRQ3o0bl9//fVrXW+7du3y45U3AAAAWKJKvM8777x08cUX5yriMQ73pZdemoPzd7/73bTKKqss1DLiudFj+T333JOXUW6THcG9ffv2+e+QIUNy6XR0uBYB+fjjj89hO3o0DzH8WATsI444Il1wwQV5GaeffnpedgRsAAAAWCpLvN999908fnaIDtBi7O0WLVrkcbd/85vfLNQyrr766tyT+Y477pjDevl26623Vs0T4T6GCxs0aFAeYiyqj1dWY2/VqlWuph5/I5Affvjh6cgjj0znnHNOfV8aAAAANH2J94orrpimT5+e//+1r30td4wWw3pFe+wvv/xyoZaxMEOIL7fccunKK6/Mt7qsttpq6U9/+tMibD0AAAAs4cE7Sp+jLXWE7W9961vphBNOyO20Y9ouu+zSsFsJAAAAzS14X3HFFWnGjBn5/z/5yU9yJ2hPP/10rhIebawBAACAxQje0dlZWcuWLdPw4cPtTwAAAFic4B3jXZeH3or/z48hugAAAGARg3d0qDZp0qTUvXv31KVLl9yLeW0dpsX0OXPm2L8AAAA0e4sUvKPztHIV8zFjxjT7nQcAAAANGrx32GGHWv8PAAAA1K5lqqdrrrkm3X777fNMj2nXXXddfRcLAAAAy5R6B++RI0emlVZaaZ7p0f77vPPOW9ztAgAAgOYdvMePH59WX331eaavttpq+TEAAABgMYJ3lGy/8sor80x/+eWXU7du3exbAAAAWJzgfcghh6Qf/vCHuXfzGDosbtHr+QknnJAOPvhgOxcAAAAWtVfzSj/72c/S+++/n3bZZZfUuvX/Lmbu3LnpyCOP1MYbAAAAFjd4t23bNt166605gEf18vbt26eNNtoot/EGAAAAFjN4l33961/PNwAAAKABg3e06b722mvT6NGj05QpU3I180rR3hsAAACau3oH7+hELYL3wIED04YbbphatGjRsFsGAAAAzTl433LLLem2225Le+21V8NuEQAAACxDWi5O52prrbVWw24NAAAALGPqHbx/9KMfpUsvvTSVSqWG3SIAAABYhtS7qvlTTz2VxowZkx544IG0wQYbpDZt2lR7/M4772yI7QMAAIDmGby7dOmS9ttvv4bdGgAAAFjG1Dt4X3PNNQ27JQAAALAMqncb7zB79uz0yCOPpF//+tdp+vTpedrEiRPT559/3lDbBwAAAM2rxHvu3LmpZcuW6YMPPkh77LFHGj9+fJo5c2babbfdUseOHdMvfvGLfH/UqFHFbDEAAAAsqyXer776atp+++3z/0844YS0+eabp08//TS1b9++ap5o9z169OiG31IAAABYlku8//CHP6Rzzjkn/f73v8/3n3zyyfT000/n8bwr9e3bN/3P//xPw28pAAAALMsl3lHFfM6cOalFixbV7tf04Ycf5irnAAAAwCIE7wMPPDDdcMMN6dhjj833o033JZdcUvV4BPLoVO2ss85Ke+21l30LAAAAi9q52mabbZarmIeLLrooDRgwIK2//vppxowZ6dBDD01vv/12WmmlldLNN99s5wIAAEB9ejVv3fp/n9K7d+/08ssvp1tuuSW98sorubR7yJAh6bDDDqvW2RoAAAA0Z60X68mtW6fDDz+84bYGAAAAljH1Dt7XX3/9fB8/8sgj67toAAAAWGbUO3jHON6VZs2alb788ss8vNjyyy8veAMAAMCi9Gpe06efflrtFm28x40bl7bddludqwEAAMDiBu/arL322un888+fpzQcAAAAmqsGDd7lDtcmTpzY0IsFAACA5tXG+49//GO1+6VSKU2aNCldccUVaZtttmmIbQMAAIDmG7z33XffavdbtGiRVl555bTzzjunX/3qVw2xbQAAANB8g/fcuXMbdksAAABgGdTgbbwBAACABijxPumkkxZ63osuuqi+qwEAAIDmGbz/9re/5dusWbPSOuusk6e99dZbqVWrVmmzzTar1vYbAAAAmqt6B++99947dezYMV133XVpxRVXzNM+/fTTdPTRR6ftttsu/ehHP2rI7QQAAIDm1cY7ei4fOXJkVegO8f9zzz1Xr+YAAACwuMF72rRp6eOPP55nekybPn16fRcLAAAAy5R6B+/99tsvVyu/884704cffphvd9xxRxoyZEjaf//9G3YrAQAAoLm18R41alQ6+eST06GHHpo7WMsLa906B+8LL7ywIbcRAAAAml+J9/LLL5+uuuqq9K9//auqh/NPPvkkT+vQocNCL+eJJ57IHbX16tUr94B+9913V3v8qKOOytMrb3vssUe1eWK9hx12WOrUqVPq0qVLDv+ff/55fV8aAAAANH3wLps0aVK+rb322jlwl0qlRXr+F198kTbZZJN05ZVX1jlPBO3yeuJ28803V3s8Qvfrr7+eHn744XTfffflMH/sscfW+zUBAABAk1c1j5LuAw88MI0ZMyaXQr/99ttpjTXWyKXN0bt59Hq+MPbcc898m5927dqlnj171vrYG2+8kR588MH0/PPPp8033zxPu/zyy9Nee+2VfvnLX+aSdAAAAFjqSryHDRuW2rRpk8aPH5+rnZcddNBBOQg3pMceeyx17949rbPOOun73/9+Dv1lY8eOzdXLy6E77Lrrrqlly5bp2WefbdDtAAAAgEYr8f7zn/+cHnroodS7d+9q06PK+QcffJAaSlQzj17SV1999fTuu++mH//4x7mEPAJ3q1at0uTJk3MorxSdvHXt2jU/VpuZM2fmW+XQaFCkvsPvt4MBAKCZqnfwjrbZ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3gAAAFAgwRsAAAAKJHgDAABAgQRvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUSPAGAACAAgneAAAAUCDBGwAAAAokeAMAAECBBG8AAAAokOANAAAABRK8AQAAoECCNwAAABRI8AYAAIACCd4AAABQIMEbAAAACiR4AwAAgOANAAAASycl3gAAAFAgwRsAAAAKJHgDAABAgQRvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUSPAGAACA5hy8f/rTn6YWLVpUu6277rpVj8+YMSMNHTo0devWLa2wwgpp0KBB6aOPPmrSbQYAAIClJniHDTbYIE2aNKnq9tRTT1U9NmzYsHTvvfem22+/PT3++ONp4sSJaf/992/S7QUAAICy1mkp0Lp169SzZ895pk+dOjX99re/TTfddFPaeeed87RrrrkmrbfeeumZZ55JW2+9dRNsLQAAACxlJd5vv/126tWrV1pjjTXSYYcdlsaPH5+nv/jii2nWrFlp1113rZo3qqGvuuqqaezYsXUub+bMmWnatGnVbgAAANAsS7y32mqrdO2116Z11lknVzM/++yz03bbbZdee+21NHny5NS2bdvUpUuXas/p0aNHfqwuI0eOzMsBgIbSd/j9jbYz3z9/YKOtCwBoBsF7zz33rPr/xhtvnIP4aqutlm677bbUvn37ei1zxIgR6aSTTqq6HyXeffr0aZDtBQAAgKUqeNcUpdtf//rX0zvvvJN222239NVXX6XPPvusWql39GpeW5vwsnbt2uUbAMtmiXBQKgwALCmWijbelT7//PP07rvvplVWWSX169cvtWnTJo0ePbrq8XHjxuU24P3792/S7QQAAIClosT75JNPTnvvvXeuXh5DhZ111lmpVatW6ZBDDkmdO3dOQ4YMydXGu3btmjp16pSOP/74HLr1aA4AAMCSYIkP3h9++GEO2f/617/SyiuvnLbddts8VFj8P1x88cWpZcuWadCgQbm38gEDBqSrrrqqqTcbAAAAlo7gfcstt8z38eWWWy5deeWV+QYAAABLmqWujTcAAAAsTQRvAAAAKJDgDQAAAM25jTcALA3jhgMA1EWJNwAAABRI8AYAAIACCd4AAABQIMEbAAAACiR4AwAAQIEEbwAAACiQ4A0AAAAFErwBAACgQII3AAAAFEjwBgAAgAIJ3gAAAFAgwRsAAAAK1LrIhQMALKq+w+9vtJ32/vkDG21dADRfSrwBAACgQII3AAAAFEjwBgAAgAIJ3gAAAFAgwRsAAAAKJHgDAABAgQRvAAAAKJDgDQAAAAVqXeTCAYClX9/h9zf1JgDAUk2JNwAAABRI8AYAAIACCd4AAABQIG28AWApo801ACxdlHgDAABAgQRvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUSPAGAACAAgneAAAAUCDBGwAAAArUusiFAwDQdPoOv79R1/f++QMbdX0ASwsl3gAAAFAgwRsAAAAKJHgDAABAgQRvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUyDjeAAAsleOGN6ZleYxy471D8QTvpcyy/IUGAI1N4ACgMSxTVc2vvPLK1Ldv37TccsulrbbaKj333HNNvUkAAAA0c8tMifett96aTjrppDRq1Kgcui+55JI0YMCANG7cuNS9e/em3jwAADXXlmJqRwCLY5kJ3hdddFE65phj0tFHH53vRwC///770+9+97s0fPjwpt48AABgGecHGpbp4P3VV1+lF198MY0YMaJqWsuWLdOuu+6axo4dO8/8M2fOzLeyqVOn5r/Tpk1LS7q5M79s6k0AAKBgqw67fZndx4392l47e8Aye63e2Pllw7MeWibft8Xd/6VSqXkE73/+859pzpw5qUePHtWmx/0333xznvlHjhyZzj777Hmm9+nTp9DtBAAAGlfnS5bdPe61LRmmT5+eOnfuvOwH70UVJePRHrxs7ty56ZNPPkndunVLLVq0aLBfPyLIT5gwIXXq1KlBlgnLIucKOFfAdwq4/loaRUl3hO5evXotcN5lInivtNJKqVWrVumjjz6qNj3u9+zZc57527Vrl2+VunTpUsi2RegWvMG5Ar5XoPG4/gLnSmNZUEn3MjWcWNu2bVO/fv3S6NGjq5Vix/3+/fs36bYBAADQvC0TJd4hqo4PHjw4bb755mnLLbfMw4l98cUXVb2cAwAAQFNYZoL3QQcdlD7++ON05plnpsmTJ6dNN900Pfjgg/N0uNZYoir7WWedNU+VdsC5Ar5XwPUXNCVZpfG1KC1M3+cAAABAvSwTbbwBAABgSSV4AwAAQIEEbwAAACiQ4A0AAAAFErwLcuWVV6a+ffum5ZZbLm211VbpueeeK2pVsFR44okn0t5775169eqVWrRoke6+++5qj0c/jzEqwSqrrJLat2+fdt111/T222832fZCUxg5cmTaYostUseOHVP37t3Tvvvum8aNG1dtnhkzZqShQ4embt26pRVWWCENGjQoffTRR94wmpWrr746bbzxxqlTp0751r9///TAAw9UPe48gXmdf/75+RrsxBNPdK40AcG7ALfeemseVzyGE/vrX/+aNtlkkzRgwIA0ZcqUIlYHS4Uvvvginwvxo1RtLrjggnTZZZelUaNGpWeffTZ16NAhnzdx8QTNxeOPP55D9TPPPJMefvjhNGvWrLT77rvn86ds2LBh6d5770233357nn/ixIlp//33b9LthsbWu3fvHCJefPHF9MILL6Sdd9457bPPPun111/PjztPoLrnn38+/frXv84/WFVyrjSiGE6MhrXllluWhg4dWnV/zpw5pV69epVGjhxpV8P/DmFYuuuuu6r2xdy5c0s9e/YsXXjhhVXTPvvss1K7du1KN998s31GszVlypR8vjz++ONV50WbNm1Kt99+e9U8b7zxRp5n7NixTbil0PRWXHHF0n//9387T6CG6dOnl9Zee+3Sww8/XNphhx1KJ5xwQp7uO6VxKfFuYF999VX+9TWqyZa1bNky3x87dmxDrw6WCe+9916aPHlytfOmc+fOuZmG84bmbOrUqflv165d89/4folS8MpzZd11102rrrqqc4Vma86cOemWW27JNUOiyrnzBKqLmlQDBw6s9t0RnCuNq3Ujr2+Z989//jN/AfTo0aPa9Lj/5ptvNtl2wZIsQneo7bwpPwbNzdy5c3M7vG222SZtuOGGeVqcD23btk1dunSpNq9zhebo1VdfzUE7miRFfwd33XVXWn/99dNLL73kPIH/L36UiqavUdW8Jt8pjUvwBoAltITitddeS0899VRTbwoskdZZZ50csqNmyB/+8Ic0ePDg3O8B8L8mTJiQTjjhhNxnSHT4TNNS1byBrbTSSqlVq1bz9DAb93v27NnQq4NlQvnccN7A/zruuOPSfffdl8aMGZM7kao8V6JJ02effVZtV/mOoTmK2h9rrbVW6tevXx4RIDrwvPTSS50nUFGVPDp33myzzVLr1q3zLX6cis5s4/9RW8p3SuMRvAv4EogvgNGjR1erLhj3ozoUMK/VV189XyhVnjfTpk3LvZs7b2hOou/BCN1RZfbRRx/N50al+H5p06ZNtXMlhhsbP368c4VmL663Zs6c6TyB/2+XXXbJTTKiZkj5tvnmm6fDDjus6v++UxqPquYFiKHEorpTHMxbbrlluuSSS3KHH0cffXQRq4Olwueff57eeeedah2qxYd+dBoVHUNFW9Zzzz03rb322jlsnHHGGXnM7xjHGJpT9fKbbrop3XPPPXks73IfB9HZYIxvH3+HDBmSv2fi3Inxi48//vgcurfeeuum3nxoNCNGjEh77rln/v6YPn16Pm8ee+yx9NBDDzlP4P+L75FyHyFlMVxrt27dqqb7Tmk8gncBDjrooPTxxx+nM888M180bbrppunBBx+cp+MoaE5inNWddtqp6n4EhxA/Ul177bXp1FNPzT9QHXvssbka7bbbbpvPG22SaE6uvvrq/HfHHXesNv2aa65JRx11VP7/xRdfnEfLGDRoUC7di/Hur7rqqibZXmgqUX32yCOPTJMmTcpBO8YmjtC922675cedJ7BwnCuNp0WMKdaI6wMAAIBmRRtvAAAAKJDgDQAAAAUSvAEAAKBAgjcAAAAUSPAGAACAAgneAAAAUCDBGwAAAAokeANAA7jrrrvSbbfdZl8CAPMQvAFgMT333HPpxBNPTFtvvfVSvy8fe+yx1KJFi/TZZ5819abk7bj77rubejMAYLEJ3gBQ4aijjsqB7/zzz6+2XyIAxvSapk6dmr7zne/kEu9VV13VvgQA5iF4A0ANyy23XPrFL36RPv300wXum86dO6dXXnklbbbZZk22H7/66qsmW/fSrFQqpdmzZzf1ZgDQDAjeAFDDrrvumnr27JlGjhxZ57756U9/mjbddNNq0y655JLUt2/faqXn++67bzrvvPNSjx49UpcuXdI555yTw94pp5ySunbtmnr37p2uueaaasuZMGFCOvDAA/P8Mc8+++yT3n///XmW+/Of/zz16tUrrbPOOnn6q6++mnbeeefUvn371K1bt3Tsscemzz//fL7v75/+9Kf09a9/PT9np512qraesqeeeiptt912eZ4+ffqkH/7wh+mLL75Y4L759a9/nedffvnl8+uJ2gFlzz//fNptt93SSiutlH+82GGHHdJf//rX+W7raaedlrc1lrfGGmukM844I82aNSs/9tZbb+UaCW+++Wa151x88cVpzTXXrFaN/oEHHkj9+vVL7dq1y6/t3Xffzfs43qMVVlghbbHFFumRRx6ptpyrrroqrb322vlHmZjvgAMOmO+2AkAlwRsAamjVqlUOy5dffnn68MMPF2v/PProo2nixInpiSeeSBdddFE666yz0je/+c204oorpmeffTZ973vfS9/97ner1hNBcsCAAaljx47pySefTH/5y19yGNxjjz2qlWyPHj06jRs3Lj388MPpvvvuy0E4nhfLjVB7++235/B43HHH1bltEfD333//tPfee6eXXnopV5kfPnx4tXkilMa6Bw0alEv2b7311hxW57fc8M477+TO5u6999704IMPpr/97W/pBz/4QdXj06dPT4MHD87LeuaZZ3Ko3WuvvfL0usQ+ufbaa9Pf//73dOmll6b/+q//ysE6RCDffPPN04033ljtOXH/0EMPrTYtXmM0JXjjjTfSxhtvnH+ciHXHPo3tjNcb+2T8+PF5/hdeeCH/2BA/msQ+j9ez/fbbz/f1A0A1JQCgyuDBg0v77LNP/v/WW29d+va3v53/f9ddd5UqvzbPOuus0iabbFJtz1188cWl1VZbrdqy4v6cOXOqpq2zzjql7bbbrur+7NmzSx06dCjdfPPN+f4NN9yQ55k7d27VPDNnziy1b9++9NBDD1Utt0ePHnl62W9+85vSiiuuWPr888+rpt1///2lli1bliZPnlzrOzxixIjS+uuvX23aaaedll/np59+mu8PGTKkdOyxx1ab58knn8zL/fe//13rcmPftGrVqvThhx9WTXvggQfycyZNmlTrc2IfdezYsXTvvfdWTYvtiP1elwsvvLDUr1+/avt/zTXXrLo/bty4vIw33ngj3x8zZky+f/fdd5cWZIMNNihdfvnl+f933HFHqVOnTqVp06Yt8HkAUBsl3gBQh2jnfd111+WS0fraYIMNUsuW//d1G9WUN9poo2ql61EtfMqUKfn+yy+/nEuLo3Q3SrrjFtXNZ8yYkUufy2IZbdu2rbof27jJJpukDh06VE3bZptt0ty5c3MpbW3iOVtttVW1af379692P7YnSpnL2xK3KFmP5b733nt1vu7oaO5rX/tateVWbstHH32UjjnmmFzSHVXNO3XqlEuey6XMtYnS9nhN0QwgtuP000+vNv/BBx+cq8pHCXq5tDva3q+77rrVlhMl45VivSeffHJab731cvX+WHbsm/Kyo0r8aqutlqu3H3HEEXm5X375ZZ3bCQA1tZ5nCgCQRXXiCJkjRozI7aorRZj+30LZ/1Nub1ypTZs21e5HG+PapkUoLYfAaH9cs8p0WHnllav+XxmwixTbE1Xho6p1TYvTi3tUM//Xv/6Vq4xHqI321hHO6+oobuzYsemwww5LZ599dn5PIqzfcsst6Ve/+lXVPBHIo437TTfdlId2i7/f//7351lWzX0XoTuq7P/yl79Ma621Vm7LHm24y9sSP4JE+/NoI/7nP/85nXnmmbkde1Tpj6AOAAsieAPAfERb4OgorNyBWWUInjx5cg7f5WHGop304ooS2ijZ7d69ey4FXlhRWhsl09HWuxwso314/EBQc9srn/PHP/6x2rRyaXHl9kSb6gikiyJKi6Nte3T+Vl5u5bbEtkWHZdG2utze/J///Gedy3v66adzQP/JT35SNe2DDz6YZ74I56eeemo65JBD0j/+8Y9cCr4gsS3xw8p+++1X9WNDzU7mWrdunTvdi1u004/AHe33o408ACyIquYAMB9RpTvC3GWXXVZt+o477pg+/vjjdMEFF+Qq4FdeeWXuLXtxxbqip+/oZTs6V4vq3FHSGiXO8+voLZ4XPW5HSfJrr72WxowZk44//vhcNTqqt9cmOnZ7++23cw/rUQU8SogjvNfsSTxCb3SmFj8sxPz33HPPAjtXK29LVFWP1xHbHz2bR6l0iCrmN9xwQ67SHZ3MxfZHSXNdYv4I81HKHfs73o8YO72mCMLRQVuUdEcv7eXgPz+x7DvvvDO/vtje6IytXAMhROd1sb54PML+9ddfnx+v6wcNAKhJ8AaABYjerCuDWLm0OEpsI3BH2+rnnnsuV1leXDFUVvSAHtW4I0TGeoYMGZLbeM+vBDye99BDD6VPPvkkD4cVVaV32WWXdMUVV9T5nFjHHXfcke6+++78GkaNGpV7c68UvX4//vjjebiuGFLsP/7jP3JV6wUF2ighj+2PEu3dd989Lyf2V9lvf/vbPE56lKjHjwMRzKOUvy7/+Z//mYYNG5YDf9RAiB8DYjixmqJaePRIHgE6wvzCiN7mozf4b3zjG/m5UZW9clz2KN2OYB7V2OP9iP1088035/b7ALAwWkQPaws1JwDAQoj2zxHmG6LqPQAsC5R4AwAAQIEEbwAAACiQquYAAABQICXeAAAAUCDBGwAAAAokeAMAAECBBG8AAAAokOANAAAABRK8AQAAoECCNwAAABRI8AYAAIACCd4AAACQivP/AMrdEKS0SSkmAAAAAElFTkSuQmCC"/>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 7. Padronização dos labels</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Nesta etapa vamos padronizar os rótulos textuais para evitar inconsistências de capitalização e espaços.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">def normalize_label(label: str) -&gt; str:
+    label = str(label).strip()
+    label = normalize_whitespace(label)
+    return label
+
+df_prep["category_original"] = df_prep["category"].astype(str)
+df_prep["category_final"] = df_prep["category_original"].apply(normalize_label)
+
+print("Categorias originais:", df_prep["category_original"].nunique())
+print("Categorias finais   :", df_prep["category_final"].nunique())</code></pre>
+</div>
+<div class="output-stream">
+<pre>Categorias originais: 242
+Categorias finais   : 242
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">category_counts = (
+    df_prep["category_final"]
+    .value_counts()
+    .rename_axis("category_final")
+    .reset_index(name="count")
+)
+
+category_counts.head(20)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>category_final</th>
+<th>count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>SEM-CATEGORIA</td>
+<td>270</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Crédito Imobiliário</td>
+<td>25</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Registrato</td>
+<td>25</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Sistema de Pagamentos em Moeda Local (SML)</td>
+<td>24</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Cartão de Crédito e Crédito Rotativo</td>
+<td>24</td>
+</tr>
+<tr>
+<th>5</th>
+<td>Tarifas bancárias</td>
+<td>22</td>
+</tr>
+<tr>
+<th>6</th>
+<td>Conta-Salário e Portabilidade Salarial</td>
+<td>22</td>
+</tr>
+<tr>
+<th>7</th>
+<td>Programa Nacional de Fortalecimento da Agricul...</td>
+<td>20</td>
+</tr>
+<tr>
+<th>8</th>
+<td>CBE - Capitais Brasileiros no Exterior Informa...</td>
+<td>20</td>
+</tr>
+<tr>
+<th>9</th>
+<td>Censo Anual de Capitais Estrangeiros no País</td>
+<td>17</td>
+</tr>
+<tr>
+<th>10</th>
+<td>Transferências</td>
+<td>17</td>
+</tr>
+<tr>
+<th>11</th>
+<td>Liquidação Extrajudicial - Consórcios</td>
+<td>15</td>
+</tr>
+<tr>
+<th>12</th>
+<td>Pagamento Instantâneo (Pix) Entendendo como se...</td>
+<td>15</td>
+</tr>
+<tr>
+<th>13</th>
+<td>Sandbox Regulatório Informações sobre o Ciclo 1</td>
+<td>15</td>
+</tr>
+<tr>
+<th>14</th>
+<td>Processos de Autorização do Banco Central Info...</td>
+<td>15</td>
+</tr>
+<tr>
+<th>15</th>
+<td>Consórcios Contemplação</td>
+<td>14</td>
+</tr>
+<tr>
+<th>16</th>
+<td>Mercado de câmbio</td>
+<td>14</td>
+</tr>
+<tr>
+<th>17</th>
+<td>Instituições de Pagamento</td>
+<td>14</td>
+</tr>
+<tr>
+<th>18</th>
+<td>Política Monetária</td>
+<td>13</td>
+</tr>
+<tr>
+<th>19</th>
+<td>Pagamento Instantâneo (Pix) Entendendo sobre a...</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">RARE_CLASS_THRESHOLD = 5
+
+rare_classes = category_counts[category_counts["count"] &lt; RARE_CLASS_THRESHOLD].copy()
+
+print("Quantidade de classes raras (threshold &lt; 5):", rare_classes.shape[0])
+rare_classes</code></pre>
+</div>
+<div class="output-stream">
+<pre>Quantidade de classes raras (threshold &lt; 5): 126
+</pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>category_final</th>
+<th>count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>116</th>
+<td>Cheques Endosso</td>
+<td>4</td>
+</tr>
+<tr>
+<th>117</th>
+<td>Moedas Virtuais</td>
+<td>4</td>
+</tr>
+<tr>
+<th>118</th>
+<td>Cadastro de Clientes do Sistema Financeiro Nac...</td>
+<td>4</td>
+</tr>
+<tr>
+<th>119</th>
+<td>Segunda Família do Real</td>
+<td>4</td>
+</tr>
+<tr>
+<th>120</th>
+<td>Processo Administrativo Sancionador Decisão</td>
+<td>4</td>
+</tr>
+<tr>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th>237</th>
+<td>Calculadora do cidadão Financiamento com Prest...</td>
+<td>1</td>
+</tr>
+<tr>
+<th>238</th>
+<td>Cédulas e moedas para troco</td>
+<td>1</td>
+</tr>
+<tr>
+<th>239</th>
+<td>Crédito Rural Títulos de Crédito Rural</td>
+<td>1</td>
+</tr>
+<tr>
+<th>240</th>
+<td>Crédito Rural Proagro</td>
+<td>1</td>
+</tr>
+<tr>
+<th>241</th>
+<td>Cadastro Positivo Correção de dados e solução ...</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>126 rows × 2 columns</p>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📌 Decisão de preparação sobre classes raras</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Para o MVP, <strong>não vamos agrupar classes automaticamente nesta etapa</strong>.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Motivo</strong><ul>
+<li>queremos preservar a taxonomia original</li>
+<li>o baseline ajudará a mostrar onde há maior confusão</li>
+<li>agrupamentos podem ser feitos depois com base em evidência analítica</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Assim, a coluna-alvo do projeto seguirá como:
+<strong><code>category_final</code></strong></li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 8. Estratégia de split para modelagem</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Usaremos:<ul>
+<li><code>train</code> oficial do dataset como base de treino</li>
+<li><code>test</code> oficial do dataset como teste final</li>
+<li>split adicional de validação sobre o treino oficial</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Isso preserva a separação original e cria uma base adequada para seleção de modelo.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_base = df_prep[df_prep["split"] == "train"].copy()
+test_gold = df_prep[df_prep["split"] == "test"].copy()
+
+train_class_counts = train_base["category_final"].value_counts()
+can_stratify = train_class_counts.min() &gt;= 2
+
+print("Shape train_base:", train_base.shape)
+print("Shape test_gold :", test_gold.shape)
+print("Estratificação viável?", can_stratify)</code></pre>
+</div>
+<div class="output-stream">
+<pre>Shape train_base: (1305, 11)
+Shape test_gold : (373, 11)
+Estratificação viável? False
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">split_kwargs = {
+    "test_size": 0.20,
+    "random_state": 42,
+    "shuffle": True,
+}
+
+if can_stratify:
+    split_kwargs["stratify"] = train_base["category_final"]
+else:
+    split_kwargs["stratify"] = None
+
+train_gold, valid_gold = train_test_split(train_base, **split_kwargs)
+
+train_gold = train_gold.copy()
+valid_gold = valid_gold.copy()
+test_gold = test_gold.copy()
+
+train_gold["model_split"] = "train"
+valid_gold["model_split"] = "valid"
+test_gold["model_split"] = "test"
+
+print("train_gold:", train_gold.shape)
+print("valid_gold:", valid_gold.shape)
+print("test_gold :", test_gold.shape)</code></pre>
+</div>
+<div class="output-stream">
+<pre>train_gold: (1044, 12)
+valid_gold: (261, 12)
+test_gold : (373, 12)
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">split_distribution = pd.concat(
+    [
+        train_gold["category_final"].value_counts(normalize=True).rename("train_pct"),
+        valid_gold["category_final"].value_counts(normalize=True).rename("valid_pct"),
+        test_gold["category_final"].value_counts(normalize=True).rename("test_pct"),
+    ],
+    axis=1
+).fillna(0).round(4)
+
+split_distribution.head(20)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>train_pct</th>
+<th>valid_pct</th>
+<th>test_pct</th>
+</tr>
+<tr>
+<th>category_final</th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>SEM-CATEGORIA</th>
+<td>0.1628</td>
+<td>0.1303</td>
+<td>0.1769</td>
+</tr>
+<tr>
+<th>Crédito Imobiliário</th>
+<td>0.0192</td>
+<td>0.0038</td>
+<td>0.0107</td>
+</tr>
+<tr>
+<th>Registrato</th>
+<td>0.0153</td>
+<td>0.0115</td>
+<td>0.0161</td>
+</tr>
+<tr>
+<th>Sistema de Pagamentos em Moeda Local (SML)</th>
+<td>0.0144</td>
+<td>0.0077</td>
+<td>0.0188</td>
+</tr>
+<tr>
+<th>Programa Nacional de Fortalecimento da Agricultura Familiar - Pronaf</th>
+<td>0.0134</td>
+<td>0.0000</td>
+<td>0.0161</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Informando os ativos no exterior</th>
+<td>0.0134</td>
+<td>0.0153</td>
+<td>0.0054</td>
+</tr>
+<tr>
+<th>Tarifas bancárias</th>
+<td>0.0134</td>
+<td>0.0115</td>
+<td>0.0134</td>
+</tr>
+<tr>
+<th>Cartão de Crédito e Crédito Rotativo</th>
+<td>0.0125</td>
+<td>0.0192</td>
+<td>0.0161</td>
+</tr>
+<tr>
+<th>Conta-Salário e Portabilidade Salarial</th>
+<td>0.0115</td>
+<td>0.0230</td>
+<td>0.0107</td>
+</tr>
+<tr>
+<th>Censo Anual de Capitais Estrangeiros no País</th>
+<td>0.0096</td>
+<td>0.0153</td>
+<td>0.0080</td>
+</tr>
+<tr>
+<th>Taxa de câmbio</th>
+<td>0.0086</td>
+<td>0.0077</td>
+<td>0.0027</td>
+</tr>
+<tr>
+<th>Valores a Receber</th>
+<td>0.0086</td>
+<td>0.0038</td>
+<td>0.0054</td>
+</tr>
+<tr>
+<th>Solicitação de Relatórios Sigilosos referentes a pessoa falecida ou desaparecida</th>
+<td>0.0086</td>
+<td>0.0038</td>
+<td>0.0027</td>
+</tr>
+<tr>
+<th>Mercado de câmbio</th>
+<td>0.0086</td>
+<td>0.0038</td>
+<td>0.0107</td>
+</tr>
+<tr>
+<th>Processos de Autorização do Banco Central Informações Gerais</th>
+<td>0.0086</td>
+<td>0.0077</td>
+<td>0.0107</td>
+</tr>
+<tr>
+<th>Política Monetária</th>
+<td>0.0086</td>
+<td>0.0077</td>
+<td>0.0054</td>
+</tr>
+<tr>
+<th>Transferências</th>
+<td>0.0086</td>
+<td>0.0038</td>
+<td>0.0188</td>
+</tr>
+<tr>
+<th>Consórcios Contemplação</th>
+<td>0.0086</td>
+<td>0.0077</td>
+<td>0.0080</td>
+</tr>
+<tr>
+<th>Câmbio</th>
+<td>0.0077</td>
+<td>0.0077</td>
+<td>0.0054</td>
+</tr>
+<tr>
+<th>Instituições de Pagamento</th>
+<td>0.0077</td>
+<td>0.0038</td>
+<td>0.0134</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 9. Label mapping</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Vamos gerar uma codificação numérica simples para uso posterior nos modelos.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">label_list = sorted(df_prep["category_final"].unique())
+label_to_id = {label: idx for idx, label in enumerate(label_list)}
+id_to_label = {idx: label for label, idx in label_to_id.items()}
+
+label_mapping_df = pd.DataFrame(
+    {
+        "label_id": list(id_to_label.keys()),
+        "category_final": list(id_to_label.values()),
+    }
+)
+
+label_mapping_df.head(20)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>label_id</th>
+<th>category_final</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>0</td>
+<td>Acordo Administrativo em Processo de Supervisã...</td>
+</tr>
+<tr>
+<th>1</th>
+<td>1</td>
+<td>Alerta contra golpes envolvendo o nome do Banc...</td>
+</tr>
+<tr>
+<th>2</th>
+<td>2</td>
+<td>Aplicações financeiras</td>
+</tr>
+<tr>
+<th>3</th>
+<td>3</td>
+<td>Arranjos de Pagamentos Compras e relações de c...</td>
+</tr>
+<tr>
+<th>4</th>
+<td>4</td>
+<td>Arranjos de Pagamentos Conceitos importantes</td>
+</tr>
+<tr>
+<th>5</th>
+<td>5</td>
+<td>Arranjos de Pagamentos Informações Gerais</td>
+</tr>
+<tr>
+<th>6</th>
+<td>6</td>
+<td>Arranjos de Pagamentos Interoperabilidade, liq...</td>
+</tr>
+<tr>
+<th>7</th>
+<td>7</td>
+<td>Arranjos de Pagamentos Supervisão dos arranjos...</td>
+</tr>
+<tr>
+<th>8</th>
+<td>8</td>
+<td>Atendimento bancário (fila, feriados e outros)</td>
+</tr>
+<tr>
+<th>9</th>
+<td>9</td>
+<td>Bacen Jud e SISBAJUD Informações gerais</td>
+</tr>
+<tr>
+<th>10</th>
+<td>10</td>
+<td>Bacen Jud e SISBAJUD Ordem judicial de bloquei...</td>
+</tr>
+<tr>
+<th>11</th>
+<td>11</td>
+<td>Bacen Jud e SISBAJUD SISBAJUD</td>
+</tr>
+<tr>
+<th>12</th>
+<td>12</td>
+<td>Banco Central do Brasil</td>
+</tr>
+<tr>
+<th>13</th>
+<td>13</td>
+<td>CBE - Capitais Brasileiros no Exterior Acesso ...</td>
+</tr>
+<tr>
+<th>14</th>
+<td>14</td>
+<td>CBE - Capitais Brasileiros no Exterior Declara...</td>
+</tr>
+<tr>
+<th>15</th>
+<td>15</td>
+<td>CBE - Capitais Brasileiros no Exterior Entrega...</td>
+</tr>
+<tr>
+<th>16</th>
+<td>16</td>
+<td>CBE - Capitais Brasileiros no Exterior Exporta...</td>
+</tr>
+<tr>
+<th>17</th>
+<td>17</td>
+<td>CBE - Capitais Brasileiros no Exterior Informa...</td>
+</tr>
+<tr>
+<th>18</th>
+<td>18</td>
+<td>CBE - Capitais Brasileiros no Exterior Inician...</td>
+</tr>
+<tr>
+<th>19</th>
+<td>19</td>
+<td>CBE - Capitais Brasileiros no Exterior Obrigat...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">for part_df in [train_gold, valid_gold, test_gold]:
+    part_df["label_id"] = part_df["category_final"].map(label_to_id)
+
+silver_df = df_prep.copy()
+silver_df["label_id"] = silver_df["category_final"].map(label_to_id)
+
+selected_columns = [
+    "question_raw",
+    "question_clean_light",
+    "question_clean",
+    "category_original",
+    "category_final",
+    "label_id",
+    "answer",
+    "split",
+]
+
+silver_df = silver_df[selected_columns].copy()
+
+gold_columns = [
+    "question_raw",
+    "question_clean_light",
+    "question_clean",
+    "category_final",
+    "label_id",
+    "answer",
+    "split",
+    "model_split",
+]
+
+train_gold = train_gold[gold_columns].copy()
+valid_gold = valid_gold[gold_columns].copy()
+test_gold = test_gold[gold_columns].copy()
+
+print("silver_df:", silver_df.shape)
+print("train_gold:", train_gold.shape)
+print("valid_gold:", valid_gold.shape)
+print("test_gold :", test_gold.shape)</code></pre>
+</div>
+<div class="output-stream">
+<pre>silver_df: (1678, 8)
+train_gold: (1044, 8)
+valid_gold: (261, 8)
+test_gold : (373, 8)
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 10. Exportação das camadas silver e gold</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Arquivos a serem gerados:</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Silver</strong><ul>
+<li>base preparada completa</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Gold</strong><ul>
+<li>treino</li>
+<li>validação</li>
+<li>teste</li>
+<li>mapping de labels</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">silver_csv_path = SILVER_DIR / "faq_bacen_silver.csv"
+
+gold_train_csv_path = GOLD_DIR / "faq_bacen_gold_train.csv"
+gold_valid_csv_path = GOLD_DIR / "faq_bacen_gold_valid.csv"
+gold_test_csv_path = GOLD_DIR / "faq_bacen_gold_test.csv"
+
+label_mapping_csv_path = GOLD_DIR / "label_mapping.csv"
+label_mapping_json_path = GOLD_DIR / "label_mapping.json"
+
+silver_df.to_csv(silver_csv_path, index=False)
+train_gold.to_csv(gold_train_csv_path, index=False)
+valid_gold.to_csv(gold_valid_csv_path, index=False)
+test_gold.to_csv(gold_test_csv_path, index=False)
+label_mapping_df.to_csv(label_mapping_csv_path, index=False)
+
+with open(label_mapping_json_path, "w", encoding="utf-8") as f:
+    json.dump(
+        {
+            "label_to_id": label_to_id,
+            "id_to_label": {str(k): v for k, v in id_to_label.items()},
+        },
+        f,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+print("Arquivos exportados com sucesso.")
+print(silver_csv_path)
+print(gold_train_csv_path)
+print(gold_valid_csv_path)
+print(gold_test_csv_path)
+print(label_mapping_csv_path)
+print(label_mapping_json_path)</code></pre>
+</div>
+<div class="output-stream">
+<pre>Arquivos exportados com sucesso.
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\02-silver\faq_bacen_silver.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold\faq_bacen_gold_train.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold\faq_bacen_gold_valid.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold\faq_bacen_gold_test.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold\label_mapping.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold\label_mapping.json
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 11. Log de decisões da preparação</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Registrar decisões técnicas e de negócio nesta etapa ajuda a fortalecer reprodutibilidade e interpretação do pipeline.</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">preparation_log = pd.DataFrame(
+    [
+        [
+            "Seleção de colunas principais",
+            "Uso de question, category, answer e split como núcleo do MVP",
+            "Redução de escopo e foco na tarefa principal de classificação",
+            "Pipeline mais simples e rastreável",
+        ],
+        [
+            "Remoção de duplicatas exatas",
+            "Drop em question + category + answer + split",
+            "Evitar repetição artificial sem perder diversidade semântica",
+            "Base mais limpa para treino e avaliação",
+        ],
+        [
+            "Limpeza textual conservadora",
+            "Lowercase, remoção de acentos, pontuação controlada e espaços excedentes",
+            "Melhorar baseline sem destruir sinal do domínio",
+            "Texto limpo para TF-IDF e texto bruto preservado",
+        ],
+        [
+            "Preservação do texto original",
+            "Manutenção de question_raw para modelos avançados",
+            "Transformers se beneficiam de texto menos agressivamente limpo",
+            "Reuso futuro no Notebook 05",
+        ],
+        [
+            "Sem agrupamento automático de classes raras",
+            "Manutenção da taxonomia original nesta fase",
+            "Evitar simplificação prematura sem evidência analítica",
+            "Maior fidelidade ao problema original",
+        ],
+        [
+            "Split de validação sobre treino oficial",
+            "Train oficial dividido em train e valid",
+            "Preservação do test oficial como holdout final",
+            "Comparação mais confiável entre modelos",
+        ],
+    ],
+    columns=[
+        "decisao",
+        "racional_tecnico",
+        "racional_de_negocio",
+        "impacto_esperado",
+    ],
+)
+
+preparation_log</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>decisao</th>
+<th>racional_tecnico</th>
+<th>racional_de_negocio</th>
+<th>impacto_esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Seleção de colunas principais</td>
+<td>Uso de question, category, answer e split como...</td>
+<td>Redução de escopo e foco na tarefa principal d...</td>
+<td>Pipeline mais simples e rastreável</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Remoção de duplicatas exatas</td>
+<td>Drop em question + category + answer + split</td>
+<td>Evitar repetição artificial sem perder diversi...</td>
+<td>Base mais limpa para treino e avaliação</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Limpeza textual conservadora</td>
+<td>Lowercase, remoção de acentos, pontuação contr...</td>
+<td>Melhorar baseline sem destruir sinal do domínio</td>
+<td>Texto limpo para TF-IDF e texto bruto preservado</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Preservação do texto original</td>
+<td>Manutenção de question_raw para modelos avançados</td>
+<td>Transformers se beneficiam de texto menos agre...</td>
+<td>Reuso futuro no Notebook 05</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Sem agrupamento automático de classes raras</td>
+<td>Manutenção da taxonomia original nesta fase</td>
+<td>Evitar simplificação prematura sem evidência a...</td>
+<td>Maior fidelidade ao problema original</td>
+</tr>
+<tr>
+<th>5</th>
+<td>Split de validação sobre treino oficial</td>
+<td>Train oficial dividido em train e valid</td>
+<td>Preservação do test oficial como holdout final</td>
+<td>Comparação mais confiável entre modelos</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">prep_log_path = DOCS_DIR / "preparation_decision_log.csv"
+preparation_log.to_csv(prep_log_path, index=False)
+
+print("Log salvo em:", prep_log_path)</code></pre>
+</div>
+<div class="output-stream">
+<pre>Log salvo em: D:\_DS-Projects\nlp-triagem-inteligente-financeira\docs\preparation_decision_log.csv
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ 12. Encerramento do notebook</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Principais saídas desta etapa</strong><ul>
+<li>base bronze validada</li>
+<li>textos preparados para baseline</li>
+<li>texto original preservado para transformer</li>
+<li>labels padronizados</li>
+<li>split train / valid / test definido</li>
+<li>camadas silver e gold exportadas</li>
+<li>label mapping persistido</li>
+<li>log de decisões de preparação registrado</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Próximo passo</strong><ul>
+<li>No <strong>Notebook 04 — Modeling Baseline</strong>, vamos treinar:<ul>
+<li><strong>TF-IDF + Logistic Regression</strong></li>
+<li>sobre a base gold preparada nesta etapa.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="6"><strong>Fim</strong></font></p>
+<p><font color="#66666" size="3"></font></p></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">#!uv pip install nbconvert -U -q
+!jupyter nbconvert --to html --template-file my-template-html-v10.tpl 02_data_understanding.ipynb</code></pre>
+</div>
+</div>
+<div class="footer">
+<p>RobertoSSoares-LfLngLrnng — <span id="datetime"></span></p>
+</div>
+<script>
+            document.getElementById("datetime").innerText = new Date().toLocaleString('pt-BR');
+        </script>
+</div>
+</body>
+</html>

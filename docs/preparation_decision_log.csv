@@ -1,0 +1,7 @@
+decisao,racional_tecnico,racional_de_negocio,impacto_esperado
+Seleção de colunas principais,"Uso de question, category, answer e split como núcleo do MVP",Redução de escopo e foco na tarefa principal de classificação,Pipeline mais simples e rastreável
+Remoção de duplicatas exatas,Drop em question + category + answer + split,Evitar repetição artificial sem perder diversidade semântica,Base mais limpa para treino e avaliação
+Limpeza textual conservadora,"Lowercase, remoção de acentos, pontuação controlada e espaços excedentes",Melhorar baseline sem destruir sinal do domínio,Texto limpo para TF-IDF e texto bruto preservado
+Preservação do texto original,Manutenção de question_raw para modelos avançados,Transformers se beneficiam de texto menos agressivamente limpo,Reuso futuro no Notebook 05
+Sem agrupamento automático de classes raras,Manutenção da taxonomia original nesta fase,Evitar simplificação prematura sem evidência analítica,Maior fidelidade ao problema original
+Split de validação sobre treino oficial,Train oficial dividido em train e valid,Preservação do test oficial como holdout final,Comparação mais confiável entre modelos
