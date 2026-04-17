@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # NLP Triagem Inteligente Financeira
 
 ## CRISP-DM+ Lean: abordagem orientada por Ontologia, BLM e Semântica para NLP aplicado
@@ -182,8 +181,3 @@ e também já monto:
 # 10. Dataset
 
 https://huggingface.co/datasets/Itau-Unibanco/FAQ_BACEN/resolve/main/df_train.csv
-=======
-# CRISP-DM+ Lean: abordagem orientada por Ontologia, BLM e Semântica para NLP aplicado
-
-## Construir uma solução end-to-end de NLP para classificar, priorizar e encaminhar demandas textuais de clientes do setor financeiro.
->>>>>>> f493524540b60a97c37f29b8f0041ab92464aa48

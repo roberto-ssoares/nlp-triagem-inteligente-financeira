@@ -61,3 +61,8 @@ data/04-inference/*
 !data/03-gold/.gitkeep
 !data/04-inference/.gitkeep
 
+# Notebook
+notebook/x*
+notebook/*.tpl
+ 
+
