@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>05_modeling__tranformer_text_classifier</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/jupyterlab/3.6.3/themes/JupyterLab-light-theme.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@300;400;600&amp;family=Reddit+Sans:wght@300;400;600&amp;family=Courier+Prime:wght@400;700&amp;family=Montserrat:wght@300;400;600;700&amp;family=Source+Code+Pro:wght@400&amp;family=Red+Hat+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)'], ['$', '$']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'mathjax_process'
+        }
+      };
+    </script>
+<script async="" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+        :root{
+            --bg:#f5f5f5;
+            --paper:#ffffff;
+            --text:#1f2937;
+            --muted:#6b7280;
+            --border:#d9dde3;
+            --shadow:0 4px 12px rgba(0,0,0,.08);
+            --shadow-soft:0 2px 8px rgba(15,23,42,.06);
+            --md-bg:#f3f2ee;
+            --md-accent:#ff9800;
+            --code-bg:#f7f7f7;
+            --code-accent:#4caf50;
+            --out-bg:#f3f9fa;
+            --out-accent:#2196f3;
+            --stream-bg:#eef8ff;
+            --table-head:#f8fafc;
+            --table-zebra:#f6f8fa;
+            --exec-bg:#f7fbff;
+            --exec-border:#2E86C1;
+            --insight-bg:#f8fffb;
+            --insight-border:#22a06b;
+            --warning-bg:#fffaf2;
+            --warning-border:#f59e0b;
+            --danger-bg:#fff6f6;
+            --danger-border:#ef4444;
+            --metric-bg:#ffffff;
+            --metric-border:#d6e7f7;
+        }
+
+        *{ box-sizing:border-box; }
+
+        body{
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            background:var(--bg);
+            padding:40px 0;
+            color:var(--text);
+            line-height:1.55;
+        }
+
+        .container{
+            max-width:1550px;
+            margin:auto;
+            background:var(--paper);
+            padding:20px 30px 28px;
+            border-radius:8px;
+            box-shadow:var(--shadow);
+        }
+
+        .cell{ margin-bottom:10px; }
+
+        h1.title-header{
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            font-weight:700;
+            color:#8eb4c4;
+            text-transform:uppercase;
+            text-align:center;
+            margin:0 0 24px;
+            letter-spacing:.04em;
+        }
+
+        .markdown{
+            background:var(--md-bg);
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            padding:10px 15px;
+            border-left:5px solid var(--md-accent);
+            border-radius:4px;
+            margin:4px 0 8px;
+            line-height:1.6;
+        }
+        .markdown h1,.markdown h2,.markdown h3,.markdown h4,.markdown h5,.markdown h6{
+            margin-top:0;
+            color:#d64545;
+        }
+        .markdown p:last-child,
+        .markdown ul:last-child,
+        .markdown ol:last-child{ margin-bottom:0; }
+
+        img, svg, figure img{
+            max-width:100%;
+            height:auto;
+            display:block;
+            margin-left:auto;
+            margin-right:auto;
+            border:1px solid #ddd;
+            border-radius:6px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        figure{ margin:20px auto; text-align:center; }
+        figure figcaption{ font-size:13px; color:#555; margin-top:6px; }
+
+        .cell-toolbar{
+            display:flex;
+            justify-content:flex-end;
+            margin:0 0 4px;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+        .cell-badge{
+            display:inline-block;
+            background:#eef2f7;
+            border:1px solid #d7dee8;
+            color:#516072;
+            border-radius:999px;
+            font-size:11px;
+            font-weight:600;
+            padding:2px 8px;
+            letter-spacing:.02em;
+        }
+
+        .code_cell{
+            background:var(--code-bg);
+            border-left:5px solid var(--code-accent);
+            padding:6px 8px;
+            margin:4px 0;
+            overflow-x:auto;
+            border-radius:4px;
+        }
+        .code_cell pre,
+        .code_cell .hljs{
+            margin:0;
+            background:transparent !important;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+            white-space:pre;
+        }
+
+        .output-text,
+        .output-stream,
+        .output-error,
+        .output-image,
+        .output-html{
+            margin:4px 0;
+            border-radius:4px;
+            overflow-x:auto;
+        }
+
+        .output-text{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:10px 10px 10px 8px;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+        }
+        .output-text pre{
+            margin:0;
+            white-space:pre-wrap;
+            word-break:break-word;
+            font-family:inherit;
+            font-size:inherit;
+            line-height:inherit;
+        }
+
+        .output-stream{
+            background:var(--stream-bg);
+            border-left:5px solid var(--out-accent);
+            padding:8px 10px;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.55;
+        }
+        .output-stream pre{ margin:0; white-space:pre-wrap; word-break:break-word; }
+
+        .output-image{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:10px;
+        }
+
+        .output-html{
+            background:var(--out-bg);
+            border-left:5px solid var(--out-accent);
+            padding:8px 10px;
+            color:var(--text);
+            font-family:'Montserrat','Reddit Sans',sans-serif;
+            font-size:14px;
+            line-height:1.55;
+            white-space:normal;
+        }
+        .output-html *{ white-space:normal; word-break:normal; max-width:100%; }
+        .output-html p{ margin:0 0 10px; }
+        .output-html p:last-child{ margin-bottom:0; }
+        .output-html h1,.output-html h2,.output-html h3,.output-html h4,.output-html h5,.output-html h6{
+            margin:0 0 10px;
+            color:var(--text);
+            line-height:1.3;
+        }
+        .output-html ul,
+        .output-html ol{ margin:0 0 10px 20px; padding-left:12px; }
+        .output-html li{ margin-bottom:4px; }
+        .output-html li:last-child{ margin-bottom:0; }
+        .output-html code{ font-family:'Red Hat Mono','Noto Sans Mono',monospace; font-size:.95em; }
+        .output-html pre{
+            white-space:pre-wrap;
+            word-break:break-word;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.5;
+            margin:0;
+        }
+
+        .table-output{ padding:8px 10px; }
+        .table-output table,
+        .table-output table.dataframe{
+            border-collapse:collapse;
+            border-spacing:0;
+            width:auto;
+            max-width:100%;
+            margin:0;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.45;
+            color:#263238;
+            background:#fff;
+        }
+        .table-output table th,
+        .table-output table td,
+        .table-output table.dataframe th,
+        .table-output table.dataframe td{
+            padding:8px 10px;
+            border:1px solid var(--border);
+            vertical-align:top;
+            text-align:left;
+        }
+        .table-output table thead,
+        .table-output table.dataframe thead{ background:var(--table-head); font-weight:600; }
+        .table-output table tbody tr:nth-child(even),
+        .table-output table.dataframe tbody tr:nth-child(even){ background:var(--table-zebra); }
+        .table-output .dataframe tbody tr:hover,
+        .table-output table tbody tr:hover{ background:#eef6ff; }
+
+        /* Premium HTML blocks */
+        .output-html .executive-card,
+        .output-html .insight-card,
+        .output-html .warning-card,
+        .output-html .danger-card,
+        .output-html .summary-card{
+            border-radius:10px;
+            padding:14px 16px;
+            box-shadow:var(--shadow-soft);
+            border:1px solid #dbe5ef;
+            margin:4px 0;
+        }
+        .output-html .executive-card{
+            background:var(--exec-bg);
+            border-left:6px solid var(--exec-border);
+        }
+        .output-html .summary-card{
+            background:#f8fbff;
+            border-left:6px solid #64748b;
+        }
+        .output-html .insight-card{
+            background:var(--insight-bg);
+            border-left:6px solid var(--insight-border);
+        }
+        .output-html .warning-card{
+            background:var(--warning-bg);
+            border-left:6px solid var(--warning-border);
+        }
+        .output-html .danger-card{
+            background:var(--danger-bg);
+            border-left:6px solid var(--danger-border);
+        }
+        .output-html .card-title{
+            margin:0 0 10px;
+            font-size:20px;
+            font-weight:700;
+            color:#1f2937;
+            line-height:1.25;
+        }
+        .output-html .card-subtitle{
+            margin:0 0 12px;
+            font-size:13px;
+            font-weight:600;
+            color:#64748b;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .output-html .card-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+            gap:10px;
+            margin:10px 0 12px;
+        }
+        .output-html .metric-card{
+            background:var(--metric-bg);
+            border:1px solid var(--metric-border);
+            border-radius:10px;
+            padding:10px 12px;
+            min-height:82px;
+            box-shadow:0 1px 3px rgba(15,23,42,.05);
+        }
+        .output-html .metric-label{
+            display:block;
+            margin:0 0 6px;
+            font-size:12px;
+            font-weight:700;
+            color:#64748b;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .output-html .metric-value{
+            display:block;
+            font-size:24px;
+            font-weight:700;
+            line-height:1.15;
+            color:#0f172a;
+        }
+        .output-html .metric-note{
+            display:block;
+            margin-top:4px;
+            font-size:12px;
+            color:#6b7280;
+        }
+        .output-html .chip-row{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            margin:8px 0 10px;
+        }
+        .output-html .chip{
+            display:inline-flex;
+            align-items:center;
+            background:#edf4ff;
+            border:1px solid #d8e6ff;
+            color:#2457a6;
+            border-radius:999px;
+            padding:4px 10px;
+            font-size:12px;
+            font-weight:600;
+        }
+        .output-html .callout-compact p{ margin-bottom:8px; }
+        .output-html .callout-compact ul,
+        .output-html .callout-compact ol{ margin-bottom:8px; }
+
+        .output-error{
+            background:#fff5f5;
+            border-left:5px solid #ef4444;
+            padding:10px 12px;
+            color:#7f1d1d;
+            font-family:'Red Hat Mono','Noto Sans Mono',monospace;
+            font-size:13px;
+            line-height:1.5;
+        }
+        .output-error pre{ margin:8px 0 0; white-space:pre-wrap; word-break:break-word; }
+
+        .hidden-note{
+            margin:4px 0;
+            padding:6px 10px;
+            border-radius:6px;
+            background:#f8fafc;
+            border:1px dashed #cbd5e1;
+            color:#64748b;
+            font-size:12px;
+            font-weight:600;
+        }
+
+        .footer{
+            text-align:right;
+            margin-top:30px;
+            padding:12px;
+            background:#e9ecef;
+            border-radius:4px;
+            font-size:14px;
+            color:#555;
+        }
+
+        @media (max-width: 768px) {
+            body{ padding:16px 0; }
+            .container{ max-width:100%; padding:14px 16px 20px; border-radius:0; }
+            .output-html,
+            .output-text,
+            .output-stream,
+            .output-image,
+            .output-error,
+            .markdown,
+            .code_cell{ padding-left:10px; padding-right:10px; }
+            .output-html .card-title{ font-size:18px; }
+            .output-html .metric-value{ font-size:20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1 class="title-header">05_modeling__tranformer_text_classifier</h1>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#F3F2EE">
+<br/><br/>
+<p style="text-align: center;">
+<font color="#0A1781" size="6">
+<strong>
+                    NLP Triagem Inteligente Financeira - Data Science Project
+                </strong>
+</font>
+</p>
+<p style="text-align: center;">
+<font color="#C58A1E" size="6">
+<strong>
+                    Modeling Advanced | Transformer Text Classifier
+                </strong>
+</font>
+</p>
+<p style="text-align: center;">
+<font color="#C58A1E" size="5">
+<strong>
+                    Treinar e avaliar um classificador textual baseado em transformer<br/>para comparar seu desempenho com o baseline clássico construído.
+                </strong>
+</font>
+</p>
+<br/>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#F3F2EE">
+<p style="text-align: right;">
+<font color="#444444" size="4">
+            Roberto SSoares - LfLngLrnng
+      </font>
+</p>
+<p style="text-align: right;"><font color="#444444" size="2">
+<a href="https://www.linkedin.com/in/roberto-dos-santos-soares/">in/roberto-dos-santos-soares</a><br/><a href="https://roberto-ssoares.github.io/meu-portfolio/">Portifólio: roberto-ssoares</a>
+</font></p>
+<p style="text-align: right;">
+<font color="#444444" size="4">
+            " [+] Faturamento [-] Custo [+] Qualidade de vida "
+        </font>
+<br/>
+<font color="#918e8e" size="2">"Mestre Bruno Jardim"
+        </font>
+</p>
+<p style="text-align: right;">
+<font color="#918e8e" size="2">
+</font>
+</p>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>📌 Objetivo:</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Ações realizadas neste notebook</strong><ul>
+<li><em><strong>Leitura das bases gold de treino, validação e teste</strong></em></li>
+<li><em><strong>Definição do modelo transformer e do tokenizer</strong></em></li>
+<li><em><strong>Preparação dos dados para fine-tuning</strong></em></li>
+<li><em><strong>Treino supervisionado com validação</strong></em></li>
+<li><em><strong>Avaliação no conjunto de teste</strong></em></li>
+<li><em><strong>Comparação com o baseline</strong></em></li>
+<li><em><strong>Persistência dos artefatos do modelo avançado</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>Transformers são especialmente úteis em tarefas de NLP onde a <strong>semântica contextual</strong> importa mais do que simples frequência de termos.</li>
+<li>Neste projeto, o objetivo é medir o ganho real do modelo avançado sobre o baseline TF-IDF + Regressão Logística.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Modelo transformer treinado</li>
+<li>Métricas registradas em validação e teste</li>
+<li>Comparação objetiva com o baseline</li>
+<li>Artefatos persistidos para reuso</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>📌 Leitura executiva da etapa</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Este notebook representa a camada de <strong>NLP avançado</strong> do projeto.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>A proposta aqui é avaliar se um modelo transformer consegue superar o baseline clássico, especialmente em cenários como:<ul>
+<li><strong>classes semanticamente próximas</strong></li>
+<li><strong>perguntas curtas e ambíguas</strong></li>
+<li><strong>taxonomia multiclasses mais complexa</strong></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Nota metodológica</strong><ul>
+<li>O processo seguirá a mesma disciplina do baseline:<ul>
+<li>treino em <code>train</code></li>
+<li>seleção em <code>valid</code></li>
+<li>avaliação final em <code>test</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 1 — Setup do ambiente e leitura das bases</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Preparar o ambiente de treino com transformers e carregar os dados necessários para o fine-tuning supervisionado.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Importação das bibliotecas</strong></em></li>
+<li><em><strong>Definição dos paths do projeto</strong></em></li>
+<li><em><strong>Leitura das bases gold</strong></em></li>
+<li><em><strong>Leitura do mapping de labels</strong></em></li>
+<li><em><strong>Leitura das métricas do baseline para comparação posterior</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>O setup explícito garante reprodutibilidade, organização e integração futura com o restante do pipeline.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Ambiente pronto para fine-tuning</li>
+<li>Bases carregadas corretamente</li>
+<li>Baseline disponível para comparação</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">import warnings
+from pathlib import Path
+import json
+import os
+import random
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import torch
+from datasets import Dataset
+
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    TrainingArguments,
+    Trainer,
+    DataCollatorWithPadding,
+)
+
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import classification_report
+
+warnings.filterwarnings("ignore")</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">SEED = 42
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">pd.set_option("display.max_columns", 200)
+pd.set_option("display.max_rows", 200)
+pd.set_option("display.max_colwidth", 200)</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">PROJECT_ROOT = Path.cwd().resolve().parents[0]
+DATA_DIR = PROJECT_ROOT / "data"
+
+GOLD_DIR = DATA_DIR / "03-gold"
+TRANSFORMER_MODELS_DIR = PROJECT_ROOT / "models" / "transformer"
+REPORTS_DIR = PROJECT_ROOT / "artifacts" / "reports"
+FIGURES_DIR = PROJECT_ROOT / "artifacts" / "figures"
+
+TRANSFORMER_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+print("PROJECT_ROOT         :", PROJECT_ROOT)
+print("GOLD_DIR             :", GOLD_DIR)
+print("TRANSFORMER_MODELS_DIR:", TRANSFORMER_MODELS_DIR)
+print("REPORTS_DIR          :", REPORTS_DIR)
+print("FIGURES_DIR          :", FIGURES_DIR)
+print("CUDA disponível?     :", torch.cuda.is_available())</code></pre>
+</div>
+<div class="output-stream">
+<pre>PROJECT_ROOT         : D:\_DS-Projects\nlp-triagem-inteligente-financeira
+GOLD_DIR             : D:\_DS-Projects\nlp-triagem-inteligente-financeira\data\03-gold
+TRANSFORMER_MODELS_DIR: D:\_DS-Projects\nlp-triagem-inteligente-financeira\models\transformer
+REPORTS_DIR          : D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports
+FIGURES_DIR          : D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\figures
+CUDA disponível?     : False
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📌 Observe:</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>Este notebook reutiliza os dados preparados no Notebook 03 e compara seu desempenho com o baseline salvo no Notebook 04.</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_path = GOLD_DIR / "faq_bacen_gold_train.csv"
+valid_path = GOLD_DIR / "faq_bacen_gold_valid.csv"
+test_path = GOLD_DIR / "faq_bacen_gold_test.csv"
+label_mapping_path = GOLD_DIR / "label_mapping.csv"
+
+baseline_metrics_path = REPORTS_DIR / "baseline_test_metrics.csv"
+
+train_gold = pd.read_csv(train_path)
+valid_gold = pd.read_csv(valid_path)
+test_gold = pd.read_csv(test_path)
+label_mapping_df = pd.read_csv(label_mapping_path).sort_values("label_id")
+
+baseline_test_metrics_df = pd.read_csv(baseline_metrics_path)
+
+print("train_gold:", train_gold.shape)
+print("valid_gold:", valid_gold.shape)
+print("test_gold :", test_gold.shape)
+print("label_mapping_df:", label_mapping_df.shape)
+print("baseline_test_metrics_df:", baseline_test_metrics_df.shape)</code></pre>
+</div>
+<div class="output-stream">
+<pre>train_gold: (1044, 8)
+valid_gold: (261, 8)
+test_gold : (373, 8)
+label_mapping_df: (242, 2)
+baseline_test_metrics_df: (1, 5)
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">label_ids = label_mapping_df["label_id"].tolist()
+label_names = label_mapping_df["category_final"].tolist()
+
+id_to_label = dict(zip(label_mapping_df["label_id"], label_mapping_df["category_final"]))
+label_to_id = dict(zip(label_mapping_df["category_final"], label_mapping_df["label_id"]))
+
+N_LABELS = len(label_ids)
+
+print("Número de labels:", N_LABELS)
+print("Primeiras labels:", label_names[:10])</code></pre>
+</div>
+<div class="output-stream">
+<pre>Número de labels: 242
+Primeiras labels: ['Acordo Administrativo em Processo de Supervisão (APS)', 'Alerta contra golpes envolvendo o nome do Banco Central e de instituições financeiras', 'Aplicações financeiras', 'Arranjos de Pagamentos Compras e relações de consumo', 'Arranjos de Pagamentos Conceitos importantes', 'Arranjos de Pagamentos Informações Gerais', 'Arranjos de Pagamentos Interoperabilidade, liquidação centralizada e compulsório', 'Arranjos de Pagamentos Supervisão dos arranjos pelo BC', 'Atendimento bancário (fila, feriados e outros)', 'Bacen Jud e SISBAJUD Informações gerais']
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 2 — Definição do texto de entrada e escolha do modelo</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Definir a coluna textual que será utilizada no transformer e selecionar o checkpoint inicial do modelo.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Escolha da coluna textual</strong></em></li>
+<li><em><strong>Escolha do checkpoint pré-treinado</strong></em></li>
+<li><em><strong>Registro da estratégia inicial do experimento</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>Diferentemente do baseline, <strong>transformers costumam se beneficiar de um texto menos agressivamente limpo, preservando melhor sinal contextual</strong>.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Texto de entrada definido</li>
+<li>Modelo base escolhido</li>
+<li>Experimento pronto para tokenização</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">TEXT_COL = "question_clean_light"
+TARGET_COL = "label_id"
+
+MODEL_CHECKPOINT = "neuralmind/bert-base-portuguese-cased"
+MAX_LENGTH = 128
+
+print("TEXT_COL         :", TEXT_COL)
+print("TARGET_COL       :", TARGET_COL)
+print("MODEL_CHECKPOINT :", MODEL_CHECKPOINT)
+print("MAX_LENGTH       :", MAX_LENGTH)</code></pre>
+</div>
+<div class="output-stream">
+<pre>TEXT_COL         : question_clean_light
+TARGET_COL       : label_id
+MODEL_CHECKPOINT : neuralmind/bert-base-portuguese-cased
+MAX_LENGTH       : 128
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_gold[[TEXT_COL, "category_final", TARGET_COL]].sample(5, random_state=42)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question_clean_light</th>
+<th>category_final</th>
+<th>label_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>971</th>
+<td>é necessário emitir boleto de pagamento para realização da portabilidade?</td>
+<td>Portabilidade de Crédito Procedimentos</td>
+<td>176</td>
+</tr>
+<tr>
+<th>280</th>
+<td>onde posso consultar os escritórios de representação de instituições financeiras estrangeiras?</td>
+<td>Processos de Autorização do Banco Central Informações Gerais</td>
+<td>189</td>
+</tr>
+<tr>
+<th>536</th>
+<td>posso obter um empréstimo em uma cooperativa de crédito?</td>
+<td>SEM-CATEGORIA</td>
+<td>217</td>
+</tr>
+<tr>
+<th>824</th>
+<td>com que frequência as instituições deverão enviar as informações de valores a receber?</td>
+<td>Valores a Receber</td>
+<td>241</td>
+</tr>
+<tr>
+<th>644</th>
+<td>quero abrir uma conta no exterior. como faço?</td>
+<td>Contas de brasileiros no exterior e de estrangeiros no Brasil Contas de brasileiros no exterior</td>
+<td>71</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📌 Observe:</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>A coluna escolhida para o transformer é <code>question_clean_light</code>, pois ela preserva melhor a estrutura textual em comparação com a limpeza mais agressiva usada no baseline clássico.</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 3 — Preparação dos datasets para fine-tuning</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Converter os dados tabulares em datasets compatíveis com o ecossistema Hugging Face e aplicar tokenização.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Seleção das colunas de entrada</strong></em></li>
+<li><em><strong>Conversão para <code>Dataset</code></strong></em></li>
+<li><em><strong>Tokenização com truncamento</strong></em></li>
+<li><em><strong>Criação do data collator</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>O fine-tuning com transformers requer dados estruturados em formato adequado para batching, padding dinâmico e treino supervisionado.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Datasets tokenizados para treino, validação e teste</li>
+<li>Pipeline de entrada pronto para o trainer</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_df = train_gold[[TEXT_COL, TARGET_COL, "category_final"]].copy()
+valid_df = valid_gold[[TEXT_COL, TARGET_COL, "category_final"]].copy()
+test_df = test_gold[[TEXT_COL, TARGET_COL, "category_final"]].copy()
+
+train_df = train_df.rename(columns={TEXT_COL: "text", TARGET_COL: "label"})
+valid_df = valid_df.rename(columns={TEXT_COL: "text", TARGET_COL: "label"})
+test_df = test_df.rename(columns={TEXT_COL: "text", TARGET_COL: "label"})
+
+train_hf = Dataset.from_pandas(train_df[["text", "label"]], preserve_index=False)
+valid_hf = Dataset.from_pandas(valid_df[["text", "label"]], preserve_index=False)
+test_hf = Dataset.from_pandas(test_df[["text", "label"]], preserve_index=False)
+
+train_hf, valid_hf, test_hf</code></pre>
+</div>
+<div class="output-text">
+<pre>(Dataset({
+     features: ['text', 'label'],
+     num_rows: 1044
+ }),
+ Dataset({
+     features: ['text', 'label'],
+     num_rows: 261
+ }),
+ Dataset({
+     features: ['text', 'label'],
+     num_rows: 373
+ }))</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
+tokenizer</code></pre>
+</div>
+<div class="output-stream text-danger">
+<pre>Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+</pre>
+</div>
+<div class="output-text">
+<pre>BertTokenizer(name_or_path='neuralmind/bert-base-portuguese-cased', vocab_size=29794, model_max_length=1000000000000000019884624838656, padding_side='right', truncation_side='right', special_tokens={'unk_token': '[UNK]', 'sep_token': '[SEP]', 'pad_token': '[PAD]', 'cls_token': '[CLS]', 'mask_token': '[MASK]'}, added_tokens_decoder={
+	0: AddedToken("[PAD]", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	100: AddedToken("[UNK]", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	101: AddedToken("[CLS]", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	102: AddedToken("[SEP]", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+	103: AddedToken("[MASK]", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+})</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">def tokenize_batch(batch):
+    return tokenizer(
+        batch["text"],
+        truncation=True,
+        max_length=MAX_LENGTH,
+    )
+
+train_tokenized = train_hf.map(tokenize_batch, batched=True)
+valid_tokenized = valid_hf.map(tokenize_batch, batched=True)
+test_tokenized = test_hf.map(tokenize_batch, batched=True)
+
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)</code></pre>
+</div>
+<div class="output-text">
+<pre>Map:   0%|          | 0/1044 [00:00<?, ? examples/s]</pre>
+                        </pre></div>
+<div class="output-text">
+<pre>Map:   0%|          | 0/261 [00:00<?, ? examples/s]</pre>
+                        </pre></div>
+<div class="output-text">
+<pre>Map:   0%|          | 0/373 [00:00<?, ? examples/s]</pre>
+                        </pre></div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_tokenized[0]</code></pre>
+</div>
+<div class="output-text">
+<pre>{'text': 'o que é unidade de recebíveis?',
+ 'label': 154,
+ 'input_ids': [101, 146, 179, 253, 3812, 125, 2663, 1686, 136, 102],
+ 'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+ 'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 4 — Construção do modelo e definição das métricas</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Instanciar o modelo transformer para classificação multiclasses e definir a função de métricas usada pelo trainer.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Carregamento do modelo pré-treinado</strong></em></li>
+<li><em><strong>Definição do número de labels</strong></em></li>
+<li><em><strong>Definição da função de métricas</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>A comparação com o baseline exige métricas equivalentes, especialmente Macro F1, Weighted F1 e Accuracy.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Modelo pronto para fine-tuning</li>
+<li>Função de avaliação pronta para treino e validação</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">model = AutoModelForSequenceClassification.from_pretrained(
+    MODEL_CHECKPOINT,
+    num_labels=N_LABELS,
+    id2label=id_to_label,
+    label2id=label_to_id,
+)</code></pre>
+</div>
+<div class="output-text">
+<pre>Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]</pre>
+                        </pre></div>
+<div class="output-stream text-danger">
+<pre>[1mBertForSequenceClassification LOAD REPORT[0m from: neuralmind/bert-base-portuguese-cased
+Key                                        | Status     | 
+-------------------------------------------+------------+-
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.predictions.decoder.weight             | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
+classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">def compute_transformer_metrics(eval_pred):
+    logits, labels = eval_pred
+    preds = np.argmax(logits, axis=-1)
+
+    return {
+        "accuracy": accuracy_score(labels, preds),
+        "macro_f1": f1_score(labels, preds, average="macro", zero_division=0),
+        "weighted_f1": f1_score(labels, preds, average="weighted", zero_division=0),
+        "macro_precision": precision_score(labels, preds, average="macro", zero_division=0),
+        "macro_recall": recall_score(labels, preds, average="macro", zero_division=0),
+    }</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 5 — Treino supervisionado com validação</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Executar o fine-tuning supervisionado do transformer utilizando treino e validação.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Definição dos argumentos de treino</strong></em></li>
+<li><em><strong>Instanciação do Trainer</strong></em></li>
+<li><em><strong>Treino do modelo</strong></em></li>
+<li><em><strong>Avaliação na validação</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>Nesta etapa buscamos medir o ganho do modelo contextual em relação ao baseline, preservando a disciplina metodológica do holdout.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Modelo treinado</li>
+<li>Métricas de validação registradas</li>
+<li>Melhor checkpoint salvo</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">OUTPUT_DIR = TRANSFORMER_MODELS_DIR / "bertimbau_faq_bacen"
+
+training_args = TrainingArguments(
+    output_dir=str(OUTPUT_DIR),
+    eval_strategy="epoch",
+    save_strategy="epoch",
+    logging_strategy="epoch",
+    learning_rate=2e-5,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=16,
+    num_train_epochs=3,
+    weight_decay=0.01,
+    load_best_model_at_end=True,
+    metric_for_best_model="macro_f1",
+    greater_is_better=True,
+    save_total_limit=2,
+    report_to="none",
+    seed=SEED,
+)</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_tokenized,
+    eval_dataset=valid_tokenized,
+    processing_class=tokenizer,
+    #tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_transformer_metrics,
+)
+</code></pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">train_result = trainer.train()</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<progress max="393" style="width:300px; height:20px; vertical-align: middle;" value="393"></progress>
+      [393/393 11:11, Epoch 3/3]
+    </div>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: left;">
+<th>Epoch</th>
+<th>Training Loss</th>
+<th>Validation Loss</th>
+<th>Accuracy</th>
+<th>Macro F1</th>
+<th>Weighted F1</th>
+<th>Macro Precision</th>
+<th>Macro Recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>5.135564</td>
+<td>5.073109</td>
+<td>0.130268</td>
+<td>0.001695</td>
+<td>0.030028</td>
+<td>0.000958</td>
+<td>0.007353</td>
+</tr>
+<tr>
+<td>2</td>
+<td>4.828647</td>
+<td>4.964398</td>
+<td>0.130268</td>
+<td>0.001695</td>
+<td>0.030028</td>
+<td>0.000958</td>
+<td>0.007353</td>
+</tr>
+<tr>
+<td>3</td>
+<td>4.672442</td>
+<td>4.911575</td>
+<td>0.130268</td>
+<td>0.001695</td>
+<td>0.030028</td>
+<td>0.000958</td>
+<td>0.007353</td>
+</tr>
+</tbody>
+</table><p>
+</p></div>
+<div class="output-text">
+<pre>Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]</pre>
+                        </pre></div>
+<div class="output-text">
+<pre>Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]</pre>
+                        </pre></div>
+<div class="output-text">
+<pre>Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]</pre>
+                        </pre></div>
+<div class="output-stream text-danger">
+<pre>There were missing keys in the checkpoint model loaded: ['bert.embeddings.LayerNorm.weight', 'bert.embeddings.LayerNorm.bias', 'bert.encoder.layer.0.attention.output.LayerNorm.weight', 'bert.encoder.layer.0.attention.output.LayerNorm.bias', 'bert.encoder.layer.0.output.LayerNorm.weight', 'bert.encoder.layer.0.output.LayerNorm.bias', 'bert.encoder.layer.1.attention.output.LayerNorm.weight', 'bert.encoder.layer.1.attention.output.LayerNorm.bias', 'bert.encoder.layer.1.output.LayerNorm.weight', 'bert.encoder.layer.1.output.LayerNorm.bias', 'bert.encoder.layer.2.attention.output.LayerNorm.weight', 'bert.encoder.layer.2.attention.output.LayerNorm.bias', 'bert.encoder.layer.2.output.LayerNorm.weight', 'bert.encoder.layer.2.output.LayerNorm.bias', 'bert.encoder.layer.3.attention.output.LayerNorm.weight', 'bert.encoder.layer.3.attention.output.LayerNorm.bias', 'bert.encoder.layer.3.output.LayerNorm.weight', 'bert.encoder.layer.3.output.LayerNorm.bias', 'bert.encoder.layer.4.attention.output.LayerNorm.weight', 'bert.encoder.layer.4.attention.output.LayerNorm.bias', 'bert.encoder.layer.4.output.LayerNorm.weight', 'bert.encoder.layer.4.output.LayerNorm.bias', 'bert.encoder.layer.5.attention.output.LayerNorm.weight', 'bert.encoder.layer.5.attention.output.LayerNorm.bias', 'bert.encoder.layer.5.output.LayerNorm.weight', 'bert.encoder.layer.5.output.LayerNorm.bias', 'bert.encoder.layer.6.attention.output.LayerNorm.weight', 'bert.encoder.layer.6.attention.output.LayerNorm.bias', 'bert.encoder.layer.6.output.LayerNorm.weight', 'bert.encoder.layer.6.output.LayerNorm.bias', 'bert.encoder.layer.7.attention.output.LayerNorm.weight', 'bert.encoder.layer.7.attention.output.LayerNorm.bias', 'bert.encoder.layer.7.output.LayerNorm.weight', 'bert.encoder.layer.7.output.LayerNorm.bias', 'bert.encoder.layer.8.attention.output.LayerNorm.weight', 'bert.encoder.layer.8.attention.output.LayerNorm.bias', 'bert.encoder.layer.8.output.LayerNorm.weight', 'bert.encoder.layer.8.output.LayerNorm.bias', 'bert.encoder.layer.9.attention.output.LayerNorm.weight', 'bert.encoder.layer.9.attention.output.LayerNorm.bias', 'bert.encoder.layer.9.output.LayerNorm.weight', 'bert.encoder.layer.9.output.LayerNorm.bias', 'bert.encoder.layer.10.attention.output.LayerNorm.weight', 'bert.encoder.layer.10.attention.output.LayerNorm.bias', 'bert.encoder.layer.10.output.LayerNorm.weight', 'bert.encoder.layer.10.output.LayerNorm.bias', 'bert.encoder.layer.11.attention.output.LayerNorm.weight', 'bert.encoder.layer.11.attention.output.LayerNorm.bias', 'bert.encoder.layer.11.output.LayerNorm.weight', 'bert.encoder.layer.11.output.LayerNorm.bias'].
+There were unexpected keys in the checkpoint model loaded: ['bert.embeddings.LayerNorm.beta', 'bert.embeddings.LayerNorm.gamma', 'bert.encoder.layer.0.attention.output.LayerNorm.beta', 'bert.encoder.layer.0.attention.output.LayerNorm.gamma', 'bert.encoder.layer.0.output.LayerNorm.beta', 'bert.encoder.layer.0.output.LayerNorm.gamma', 'bert.encoder.layer.1.attention.output.LayerNorm.beta', 'bert.encoder.layer.1.attention.output.LayerNorm.gamma', 'bert.encoder.layer.1.output.LayerNorm.beta', 'bert.encoder.layer.1.output.LayerNorm.gamma', 'bert.encoder.layer.2.attention.output.LayerNorm.beta', 'bert.encoder.layer.2.attention.output.LayerNorm.gamma', 'bert.encoder.layer.2.output.LayerNorm.beta', 'bert.encoder.layer.2.output.LayerNorm.gamma', 'bert.encoder.layer.3.attention.output.LayerNorm.beta', 'bert.encoder.layer.3.attention.output.LayerNorm.gamma', 'bert.encoder.layer.3.output.LayerNorm.beta', 'bert.encoder.layer.3.output.LayerNorm.gamma', 'bert.encoder.layer.4.attention.output.LayerNorm.beta', 'bert.encoder.layer.4.attention.output.LayerNorm.gamma', 'bert.encoder.layer.4.output.LayerNorm.beta', 'bert.encoder.layer.4.output.LayerNorm.gamma', 'bert.encoder.layer.5.attention.output.LayerNorm.beta', 'bert.encoder.layer.5.attention.output.LayerNorm.gamma', 'bert.encoder.layer.5.output.LayerNorm.beta', 'bert.encoder.layer.5.output.LayerNorm.gamma', 'bert.encoder.layer.6.attention.output.LayerNorm.beta', 'bert.encoder.layer.6.attention.output.LayerNorm.gamma', 'bert.encoder.layer.6.output.LayerNorm.beta', 'bert.encoder.layer.6.output.LayerNorm.gamma', 'bert.encoder.layer.7.attention.output.LayerNorm.beta', 'bert.encoder.layer.7.attention.output.LayerNorm.gamma', 'bert.encoder.layer.7.output.LayerNorm.beta', 'bert.encoder.layer.7.output.LayerNorm.gamma', 'bert.encoder.layer.8.attention.output.LayerNorm.beta', 'bert.encoder.layer.8.attention.output.LayerNorm.gamma', 'bert.encoder.layer.8.output.LayerNorm.beta', 'bert.encoder.layer.8.output.LayerNorm.gamma', 'bert.encoder.layer.9.attention.output.LayerNorm.beta', 'bert.encoder.layer.9.attention.output.LayerNorm.gamma', 'bert.encoder.layer.9.output.LayerNorm.beta', 'bert.encoder.layer.9.output.LayerNorm.gamma', 'bert.encoder.layer.10.attention.output.LayerNorm.beta', 'bert.encoder.layer.10.attention.output.LayerNorm.gamma', 'bert.encoder.layer.10.output.LayerNorm.beta', 'bert.encoder.layer.10.output.LayerNorm.gamma', 'bert.encoder.layer.11.attention.output.LayerNorm.beta', 'bert.encoder.layer.11.attention.output.LayerNorm.gamma', 'bert.encoder.layer.11.output.LayerNorm.beta', 'bert.encoder.layer.11.output.LayerNorm.gamma'].
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">valid_metrics = trainer.evaluate(valid_tokenized)
+valid_metrics</code></pre>
+</div>
+<div class="output-text">
+<pre>{'eval_loss': 5.0641913414001465,
+ 'eval_accuracy': 0.13026819923371646,
+ 'eval_macro_f1': 0.001694915254237288,
+ 'eval_weighted_f1': 0.030027923891161764,
+ 'eval_macro_precision': 0.0009578544061302681,
+ 'eval_macro_recall': 0.007352941176470588}</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📌 Observe:</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>As métricas de validação aqui terão papel equivalente ao do Notebook 04: elas servem para validar a consistência do modelo antes da leitura final em teste.</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 6 — Avaliação final no conjunto de teste</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Medir a generalização do transformer em dados não utilizados no treino nem na seleção do melhor checkpoint.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Predição no conjunto de teste</strong></em></li>
+<li><em><strong>Cálculo das métricas globais</strong></em></li>
+<li><em><strong>Construção do relatório por classe</strong></em></li>
+<li><em><strong>Criação da base de previsões do teste</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>O conjunto de teste fornece a leitura mais honesta do ganho real do transformer sobre o baseline.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Métricas finais do transformer</li>
+<li>Relatório por classe</li>
+<li>Base pronta para análise qualitativa</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">test_output = trainer.predict(test_tokenized)
+
+test_logits = test_output.predictions
+test_pred = np.argmax(test_logits, axis=-1)
+y_test = test_df["label"].values
+
+transformer_test_metrics = {
+    "accuracy": accuracy_score(y_test, test_pred),
+    "macro_f1": f1_score(y_test, test_pred, average="macro", zero_division=0),
+    "weighted_f1": f1_score(y_test, test_pred, average="weighted", zero_division=0),
+    "macro_precision": precision_score(y_test, test_pred, average="macro", zero_division=0),
+    "macro_recall": recall_score(y_test, test_pred, average="macro", zero_division=0),
+}
+
+transformer_test_metrics</code></pre>
+</div>
+<div class="output-text">
+<pre>{'accuracy': 0.1769436997319035,
+ 'macro_f1': 0.0020594751458794893,
+ 'weighted_f1': 0.0532040281654015,
+ 'macro_precision': 0.0012119431488486542,
+ 'macro_recall': 0.00684931506849315}</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">transformer_test_metrics_df = pd.DataFrame([transformer_test_metrics])
+transformer_test_metrics_df.style.format(
+    {
+        "accuracy": "{:.4f}",
+        "macro_f1": "{:.4f}",
+        "weighted_f1": "{:.4f}",
+        "macro_precision": "{:.4f}",
+        "macro_recall": "{:.4f}",
+    }
+)</code></pre>
+</div>
+<div class="output-html table-output">
+<style type="text/css">
+</style>
+<table id="T_fbaf1">
+<thead>
+<tr>
+<th class="blank level0"> </th>
+<th class="col_heading level0 col0" id="T_fbaf1_level0_col0">accuracy</th>
+<th class="col_heading level0 col1" id="T_fbaf1_level0_col1">macro_f1</th>
+<th class="col_heading level0 col2" id="T_fbaf1_level0_col2">weighted_f1</th>
+<th class="col_heading level0 col3" id="T_fbaf1_level0_col3">macro_precision</th>
+<th class="col_heading level0 col4" id="T_fbaf1_level0_col4">macro_recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th class="row_heading level0 row0" id="T_fbaf1_level0_row0">0</th>
+<td class="data row0 col0" id="T_fbaf1_row0_col0">0.1769</td>
+<td class="data row0 col1" id="T_fbaf1_row0_col1">0.0021</td>
+<td class="data row0 col2" id="T_fbaf1_row0_col2">0.0532</td>
+<td class="data row0 col3" id="T_fbaf1_row0_col3">0.0012</td>
+<td class="data row0 col4" id="T_fbaf1_row0_col4">0.0068</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">test_report_dict = classification_report(
+    y_test,
+    test_pred,
+    labels=label_ids,
+    target_names=label_names,
+    output_dict=True,
+    zero_division=0,
+)
+
+transformer_test_report_df = pd.DataFrame(test_report_dict).T
+transformer_test_class_report = transformer_test_report_df.loc[label_names].copy()
+transformer_test_class_report = transformer_test_class_report.sort_values(
+    by="f1-score",
+    ascending=False
+)
+
+transformer_test_class_report.head(20)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>precision</th>
+<th>recall</th>
+<th>f1-score</th>
+<th>support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>SEM-CATEGORIA</th>
+<td>0.176944</td>
+<td>1.0</td>
+<td>0.300683</td>
+<td>66.0</td>
+</tr>
+<tr>
+<th>Acordo Administrativo em Processo de Supervisão (APS)</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Aplicações financeiras</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>3.0</td>
+</tr>
+<tr>
+<th>Arranjos de Pagamentos Compras e relações de consumo</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>1.0</td>
+</tr>
+<tr>
+<th>Arranjos de Pagamentos Conceitos importantes</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>2.0</td>
+</tr>
+<tr>
+<th>Arranjos de Pagamentos Informações Gerais</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Arranjos de Pagamentos Interoperabilidade, liquidação centralizada e compulsório</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>2.0</td>
+</tr>
+<tr>
+<th>Arranjos de Pagamentos Supervisão dos arranjos pelo BC</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Atendimento bancário (fila, feriados e outros)</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>4.0</td>
+</tr>
+<tr>
+<th>Bacen Jud e SISBAJUD Informações gerais</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Bacen Jud e SISBAJUD Ordem judicial de bloqueio/desbloqueio de bens e requisição de informações</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Bacen Jud e SISBAJUD SISBAJUD</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Banco Central do Brasil</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>2.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Acesso ao sistema de declaração</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>1.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Declarações de anos anteriores e multas</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>2.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Entrega e Retificação</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>1.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Exportações</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>Alerta contra golpes envolvendo o nome do Banco Central e de instituições financeiras</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>1.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Iniciando a declaração</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>CBE - Capitais Brasileiros no Exterior Obrigatoriedade da declaração</th>
+<td>0.000000</td>
+<td>0.0</td>
+<td>0.000000</td>
+<td>2.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">transformer_test_predictions_df = test_gold.copy()
+transformer_test_predictions_df["y_true"] = y_test
+transformer_test_predictions_df["y_pred"] = test_pred
+transformer_test_predictions_df["true_label"] = transformer_test_predictions_df["y_true"].map(id_to_label)
+transformer_test_predictions_df["pred_label"] = transformer_test_predictions_df["y_pred"].map(id_to_label)
+transformer_test_predictions_df["is_error"] = (
+    transformer_test_predictions_df["y_true"] != transformer_test_predictions_df["y_pred"]
+)
+
+transformer_test_predictions_df[[
+    "question_raw",
+    "true_label",
+    "pred_label",
+    "is_error"
+]].head(15)</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>question_raw</th>
+<th>true_label</th>
+<th>pred_label</th>
+<th>is_error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Qual a diferença entre credenciadores e subcredenciadores?</td>
+<td>Instituições de Pagamento</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>1</th>
+<td>O cliente pode revogar o consentimento anterior?</td>
+<td>Open Banking Autorização do cliente para compartilhamento de seus dados</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>2</th>
+<td>O que devo fazer se suspeitar que uma cédula pode ser falsa?</td>
+<td>Cédula de R$200,00 Itens de segurança e falsificações</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>3</th>
+<td>Com o Pix, a TED e o DOC vão acabar?</td>
+<td>Pagamento Instantâneo (Pix) Entendendo a diferença entre o Pix e os outros meios de pagamento (TED, DOC, boleto bancário e cartões)</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>4</th>
+<td>Todas as operações de câmbio de uma instituição compõem a média calculada para classificação?</td>
+<td>SEM-CATEGORIA</td>
+<td>SEM-CATEGORIA</td>
+<td>False</td>
+</tr>
+<tr>
+<th>5</th>
+<td>Como se classificam os recursos do crédito rural?</td>
+<td>SEM-CATEGORIA</td>
+<td>SEM-CATEGORIA</td>
+<td>False</td>
+</tr>
+<tr>
+<th>6</th>
+<td>Quando os recursos livres de clientes em posse da corretora serão liberados?</td>
+<td>Liquidação Extrajudicial - Corretoras de Títulos e Valores Mobiliários</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>7</th>
+<td>Quero efetuar o pagamento de uma conta com um cheque, mas o banco se recusa a receber. O procedimento do banco está correto?</td>
+<td>Cheques Talão de cheque</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>8</th>
+<td>Quais dados estão contidos no CCS?</td>
+<td>Cadastro de Clientes do Sistema Financeiro Nacional (CCS) Dados do CCS</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>9</th>
+<td>Quais são as condições básicas dos créditos de investimento do Pronaf - Floresta?</td>
+<td>Programa Nacional de Fortalecimento da Agricultura Familiar - Pronaf</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>10</th>
+<td>Qual o horário de funcionamento das agências bancárias?</td>
+<td>Atendimento bancário (fila, feriados e outros)</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>11</th>
+<td>Os bancos centrais atuam como garantidores das operações?</td>
+<td>Sistema de Pagamentos em Moeda Local (SML)</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>12</th>
+<td>Como é calculada a Taxa SML?</td>
+<td>Sistema de Pagamentos em Moeda Local (SML)</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>13</th>
+<td>Quais as consequências para o correntista que sustar indevidamente o seu pagamento?</td>
+<td>Cheques Sustação e revogação de cheque</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+<tr>
+<th>14</th>
+<td>O que deve estar previsto no contrato de adesão?</td>
+<td>Consórcios Cuidados aos contratar consórcios</td>
+<td>SEM-CATEGORIA</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 7 — Comparação com o baseline</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Comparar o desempenho do transformer com o baseline clássico do Notebook 04.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Leitura das métricas do baseline</strong></em></li>
+<li><em><strong>Consolidação das métricas do transformer</strong></em></li>
+<li><em><strong>Montagem de tabela comparativa</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>O objetivo desta etapa não é apenas medir o transformer isoladamente, mas verificar se ele entrega ganho prático e justificável sobre a linha de base.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Comparação objetiva entre baseline e transformer</li>
+<li>Evidência do valor incremental do modelo avançado</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">baseline_metrics = baseline_test_metrics_df.iloc[0].to_dict()
+
+comparison_df = pd.DataFrame(
+    [
+        {"model": "baseline_tfidf_logreg", **baseline_metrics},
+        {"model": "transformer_bertimbau", **transformer_test_metrics},
+    ]
+)
+
+comparison_df</code></pre>
+</div>
+<div class="output-html table-output">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>model</th>
+<th>accuracy</th>
+<th>macro_f1</th>
+<th>weighted_f1</th>
+<th>macro_precision</th>
+<th>macro_recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>baseline_tfidf_logreg</td>
+<td>0.302949</td>
+<td>0.236813</td>
+<td>0.302842</td>
+<td>0.255719</td>
+<td>0.263999</td>
+</tr>
+<tr>
+<th>1</th>
+<td>transformer_bertimbau</td>
+<td>0.176944</td>
+<td>0.002059</td>
+<td>0.053204</td>
+<td>0.001212</td>
+<td>0.006849</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">comparison_df.style.format(
+    {
+        "accuracy": "{:.4f}",
+        "macro_f1": "{:.4f}",
+        "weighted_f1": "{:.4f}",
+        "macro_precision": "{:.4f}",
+        "macro_recall": "{:.4f}",
+    }
+)</code></pre>
+</div>
+<div class="output-html table-output">
+<style type="text/css">
+</style>
+<table id="T_75769">
+<thead>
+<tr>
+<th class="blank level0"> </th>
+<th class="col_heading level0 col0" id="T_75769_level0_col0">model</th>
+<th class="col_heading level0 col1" id="T_75769_level0_col1">accuracy</th>
+<th class="col_heading level0 col2" id="T_75769_level0_col2">macro_f1</th>
+<th class="col_heading level0 col3" id="T_75769_level0_col3">weighted_f1</th>
+<th class="col_heading level0 col4" id="T_75769_level0_col4">macro_precision</th>
+<th class="col_heading level0 col5" id="T_75769_level0_col5">macro_recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th class="row_heading level0 row0" id="T_75769_level0_row0">0</th>
+<td class="data row0 col0" id="T_75769_row0_col0">baseline_tfidf_logreg</td>
+<td class="data row0 col1" id="T_75769_row0_col1">0.3029</td>
+<td class="data row0 col2" id="T_75769_row0_col2">0.2368</td>
+<td class="data row0 col3" id="T_75769_row0_col3">0.3028</td>
+<td class="data row0 col4" id="T_75769_row0_col4">0.2557</td>
+<td class="data row0 col5" id="T_75769_row0_col5">0.2640</td>
+</tr>
+<tr>
+<th class="row_heading level0 row1" id="T_75769_level0_row1">1</th>
+<td class="data row1 col0" id="T_75769_row1_col0">transformer_bertimbau</td>
+<td class="data row1 col1" id="T_75769_row1_col1">0.1769</td>
+<td class="data row1 col2" id="T_75769_row1_col2">0.0021</td>
+<td class="data row1 col3" id="T_75769_row1_col3">0.0532</td>
+<td class="data row1 col4" id="T_75769_row1_col4">0.0012</td>
+<td class="data row1 col5" id="T_75769_row1_col5">0.0068</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">plt.figure(figsize=(8, 4))
+plt.bar(comparison_df["model"], comparison_df["macro_f1"])
+plt.title("Comparação de modelos — Macro F1 no teste")
+plt.ylabel("Macro F1")
+plt.xlabel("Modelo")
+plt.tight_layout()
+plt.show()</code></pre>
+</div>
+<div class="output-image text-center">
+<img alt="Graph" class="img-fluid mx-auto d-block" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAxUAAAGGCAYAAAANcKzOAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjEwLjgsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvwVt1zgAAAAlwSFlzAAAPYQAAD2EBqD+naQAAQHlJREFUeJzt3Qm4jfX+//+3ecws01HbWMg8pQynKBwNmgwlQuqoUCrRKTScCJVEVCdpEqdJnRJJaTLPRQqZylwZohD373p9/v97fdda1t723vfa9vR8XNdir3vd657ve33enzGH53meAQAAAEAq5UztFwEAAACAoAIAAABAYJRUAAAAAAiEoAIAAABAIAQVAAAAAAIhqAAAAAAQCEEFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgDZWpcuXeyMM86we+65x3777TcrVqyY7du3L83XO2XKFMuRI4dt3rzZsgrtz/Dhw1P8PR0DfVfHBACQORFUAJnMxo0b7dZbb7XKlStb/vz5rUiRInbhhRfa008/bX/88Ud6b16msnbtWps3b5499NBD9v7771vJkiWtTZs2LrAAUkNBlQKknDlz2rZt2076/MCBA1agQAE3zx133JHpDrK2O9arbNmyoXl27NhhgwcPtosuusgF7Ppc91lG8+yzz6Z5IKtnjK6JrJR5ACQmd6KfAMhwPvzwQ7vuuussX7581r17dzvvvPPs6NGj9tVXX9m9995ra9asseeffz69NzPTUGC2bNkyq1Chgt155522c+dOK1euXHpvFrIA3aNvvPGGDRo0KGL6O++8Y5ndJZdc4p4/4RQo+b7//nt7/PHHrVq1ala7dm1bsGCBZUQKKkqVKmU33XRTmgYVyrT4+9//bgkJCWm2HiAjIKgAMolNmza5qjpnn322ffrppxGJ39tvv902bNjggo6s6MSJEy54UslMPGl5CihEOcvly5eP6/KRff3jH/+IGVRMnTrVOnToYG+//XamvYeqV69u3bp1S/Tzhg0b2i+//GIlSpSwt956y2WEAMj6qP4EZBKjRo2y33//3V588cWYuelVq1a1AQMGhN7/9ddf9sgjj1iVKlVcrqlyye6//347cuRIxPc0/bLLLnPVExo1auRyHJW76FdXUM6q3isxosTCihUrIr6vXL7ChQvbjz/+aG3btrVChQq5xPnDDz9snudFzDtmzBi74IILXDUjrUfLU6Ijml815PXXX7datWq57Z81a1aKliGvvfaaNWnSxAoWLGjFixe3li1b2scffxz6/N1333WJP22v1qFjpWN2/Pjxk5b15ptvunVpncrdVKLq559/tuRQCdLFF1/svvu3v/3NHn30UZfIi+Wjjz6yFi1auOOoqiNKgOr7yW2joVKr/v37W+nSpV01LlWVU2JS7USUu6zjoJcSu9Hn59ChQ3b33XdbxYoV3fE455xz3PGOnk/X0F133eXWoW284oor7Keffoq5XTpGvXr1sjJlyrhl6nxOnjw5WcdNwbN/LLQvV155pX333XcR8xw8eNCVMuk61vLPPPNMl5O+fPlyS0/XX3+9rVy50tatWxeappIw7ZM+i6ZzNHToUHeNFS1a1O2z9v2zzz47aV5dO6ru6N+XOg/t2rWzpUuXJuse0j3cvn17V3VS927r1q1t4cKFcdt3XRMKKFJLufoqhVUuv6pQ6f5V8K9nYLTdu3db79693fWlY1G3bl17+eWXT7kOXS+6rz7//PNQFS6t16f7RdeVfy/o+arSl+j7dtq0ae6caZ91PHVOdG78e9IPqLQf/nrCq4Kl9n4HMiQPQKZQoUIFr3Llysmev0ePHkoJetdee603YcIEr3v37u59x44dI+Y7++yzvXPOOccrV66cN3z4cO+pp55y6ypcuLD32muveWeddZY3cuRI9ypatKhXtWpV7/jx4xHryZ8/v1etWjXvxhtv9MaPH+9ddtllbl0PPvhgxLr+9re/ebfddpub58knn/SaNGni5vvggw8i5tO0GjVqeKVLl/Yeeught/0rVqxI0TK0L5p+wQUXeKNHj/aefvpp7/rrr/fuu+++0Dzazk6dOrnPn332We+6665z37nnnnsilvXSSy+56Y0bN3bHZ/DgwV6BAgW8hIQE77fffkvyPOzYscPtR/Hixd02aV06VnXq1HHL3LRpU2jeV155xcuRI4fXrl0775lnnvEef/xxt45ixYpFzBeLv4316tVz39cx0/nQtEGDBnnNmzd3+6/99M/Pyy+/HPr+iRMnvIsvvtit/+abb3bH9/LLL3fz3XnnnRHr6tatm5uu5Wm+q6++OrQ/w4YNC823c+dOd74qVqzoPfzww97EiRO9K664ws2n4+jTvmma9sE3Z84cL3fu3F716tW9UaNGueugVKlS7jiG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GzBggG3fvj007eeff7a77rrLWrduHe/tAwAAAJDVgorx48e79hMJCQlWpUoV96pUqZKb9swzz6TNVgIAAADIOm0qKlasaMuXL3ftKtatW+emqX1FmzZt0mL7AAAAAGSloOLYsWNWoEABW7lypV1yySXuBQAAACB7S1H1JzXGPuuss+z48eNpt0UAAAAAsnabin/96192//33u/EpAAAAACB3ahpqb9iwwcqXL29nn322FSpUKOJztbcAAAAAkH2kOKjo2LFj2mwJAAAAgOwRVAwbNixttgQAAABA9mhTsWTJElu0aNFJ0zVt6dKl8douAAAAAFk1qLj99ttt27ZtJ03XqNr6DAAAAED2kuKgYu3atdagQYOTptevX999BgAAACB7SXFQkS9fPtu1a9dJ03fs2GG5c6e4iQYAAACA7BZUXHrppTZkyBDbv39/aNq+ffvc2BWMsA0AAABkPykuWhgzZoy1bNnSjVGhKk+ycuVKK1OmjL366qtpsY0AAAAAslJQUaFCBVu9erW9/vrrtmrVKitQoID17NnTunbtanny5EmbrQQAAACQYaWqEYRG0b7lllvivzUAAAAAMp1Ut6xWT09bt261o0ePRky/4oor4rFdAAAAALJqUPHjjz/aVVddZd98843lyJHDPM9z0/W3HD9+PP5bCQAAACDr9P40YMAAq1Spku3evdsKFixoa9assS+++MIaNWpk8+bNS5utBAAAAJB1SioWLFhgn376qZUqVcpy5szpXs2bN7cRI0ZY//79bcWKFWmzpQAAAACyRkmFqjedccYZ7m8FFtu3b3d/q4vZ77//Pv5bCAAAACBrlVScd955ritZVYFq2rSpjRo1yvLmzWvPP/+8Va5cOW22EgAAAEDWCSoeeOABO3TokPv74Ycftssuu8xatGhhJUuWtOnTp6fFNgIAAADISkFF27ZtQ39XrVrV1q1bZ7/++qsVL1481AMUAAAAgOwj1eNUhCtRokQ8FgMAAAAgKwcVvXr1StZ8kydPDrI9AAAAALJqUDFlyhTXw1P9+vVDA94BAAAAQLKDir59+9obb7xhmzZtsp49e1q3bt2o9gQAAAAg+eNUTJgwwXbs2GGDBg2y//3vf1axYkXr1KmTzZ49m5ILAAAAIBtL0eB3+fLls65du9qcOXNs7dq1VqtWLbvtttssISHBfv/991RtgIIVfT9//vxu3IvFixcnOu+aNWvsmmuucfOrp6mxY8cGXiYAAACA0zyiduiLOXO6hL3aV2iU7dTQuBYDBw60YcOG2fLly61u3bquy9rdu3fHnP/w4cNugL2RI0da2bJl47JMAAAAAKcxqDhy5IhrV3HJJZdY9erV7ZtvvrHx48fb1q1brXDhwile+ZNPPml9+vRxbTRq1qxpkyZNsoIFCybag1Tjxo1t9OjR1qVLF1dqEo9lAgAAADhNDbVVzWnatGmuLYW6l1VwUapUqVSv+OjRo7Zs2TIbMmRIROlHmzZtbMGCBad1mQqW9PIdOHAgVesHAAAAsqNkBxXK8T/rrLNc9aPPP//cvWJ55513krW8vXv3umpTZcqUiZiu9xqlOzVSu8wRI0bYQw89lKp1AgAAANldsoOK7t27uzYUWZFKNtQOI7ykQiUyAAAAAOI8+F08qepUrly5bNeuXRHT9T6xRthptUy1z0isjQYAAACANOr9Kai8efNaw4YNbe7cuaFpJ06ccO+bNWuWYZYJAAAAIE4lFWlBVY569OhhjRo1siZNmrhxJw4dOuR6bvKrXFWoUMG1efAbYmt8DP/vn3/+2VauXOl6nqpatWqylgkAAAAgCwUVnTt3tj179tjQoUNt586dVq9ePZs1a1aoobW6qlXvTb7t27db/fr1Q+/HjBnjXq1atbJ58+Yla5kAAAAA4iuHp9HrEEENtYsWLWr79++3IkWKpMvRSRj8IWcFwGm3eWQHjjoAIMXp4nRrUwEAAAAgayCoAAAAABAIQQUAAACAQAgqAAAAAARCUAEAAAAgEIIKAAAAAIEQVAAAAAAIhKACAAAAQCAEFQAAAAACIagAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAgRBUAAAAAAiEoAIAAABAIAQVAAAAAAIhqAAAAAAQCEEFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgAAAACBEFQAAAAACISgAgAAAEAgBBUAAAAAAiGoAAAAABAIQQUAAACAQAgqAAAAAARCUAEAAAAgEIIKAAAAAIEQVAAAAAAIhKACAAAAQCAEFQAAAAACIagAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAgRBUAAAAAAiEoAIAAABAIAQVAAAAAAIhqAAAAAAQCEEFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgAAAACBEFQAAAAACISgAgAAAEAgBBUAAAAAAiGoAAAAAJD5g4oJEyZYQkKC5c+f35o2bWqLFy9Ocv4333zTzj33XDd/7dq1bebMmRGf33TTTZYjR46IV7t27dJ4LwAAAIDsKd2DiunTp9vAgQNt2LBhtnz5cqtbt661bdvWdu/eHXP++fPnW9euXa137962YsUK69ixo3t9++23EfMpiNixY0fo9cYbb5ymPQIAAACyl3QPKp588knr06eP9ezZ02rWrGmTJk2yggUL2uTJk2PO//TTT7uA4d5777UaNWrYI488Yg0aNLDx48dHzJcvXz4rW7Zs6FW8ePHTtEcAAABA9pKuQcXRo0dt2bJl1qZNm//boJw53fsFCxbE/I6mh88vKtmInn/evHl25pln2jnnnGN9+/a1X375JdHtOHLkiB04cCDiBQAAACATBBV79+6148ePW5kyZSKm6/3OnTtjfkfTTzW/SjJeeeUVmzt3rj3++OP2+eefW/v27d26YhkxYoQVLVo09KpYsWJc9g8AAADIDnJbFtSlS5fQ32rIXadOHatSpYorvWjduvVJ8w8ZMsS16/CppILAAgAAAMgEJRWlSpWyXLly2a5duyKm673aQcSi6SmZXypXruzWtWHDhpifq/1FkSJFIl4AAAAAMkFQkTdvXmvYsKGrpuQ7ceKEe9+sWbOY39H08Pllzpw5ic4vP/30k2tTUa5cuThuPQAAAIAM0fuTqh298MIL9vLLL9t3333nGlUfOnTI9QYl3bt3d9WTfAMGDLBZs2bZE088YevWrbPhw4fb0qVL7Y477nCf//77765nqIULF9rmzZtdAHLllVda1apVXYNuAAAAAFmsTUXnzp1tz549NnToUNfYul69ei5o8Btjb9261fUI5bvgggts6tSp9sADD9j9999v1apVsxkzZth5553nPld1qtWrV7sgZd++fVa+fHm79NJLXdezquYEAAAAIL5yeJ7nxXmZmZ4aaqsXqP3796db+4qEwR+my3oBZG+bR3ZI700AAGTCdHG6V38CAAAAkLkRVAAAAAAIhKACAAAAQCAEFQAAAAACIagAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAgRBUAAAAAAiEoAIAAABAIAQVAAAAAAIhqAAAAAAQCEEFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgAAAACBEFQAAAAACISgAgAAAABBBQAAAID0Q0kFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgAAAACBEFQAAAAACISgAgAAAEAgBBUAAAAAAiGoAAAAABAIQQUAAACAQAgqAAAAAARCUAEAAAAgEIIKAAAAAIEQVAAAAAAIhKACAAAAQCAEFQAAAAACIagAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAgRBUAAAAAAiEoAIAAABAIAQVAAAAAAIhqAAAAAAQCEEFAAAAgEAIKgAAAAAEQlABAAAAIBCCCgAAAACBEFQAAAAACISgAgAAAEDmDyomTJhgCQkJlj9/fmvatKktXrw4yfnffPNNO/fcc938tWvXtpkzZ0Z87nmeDR061MqVK2cFChSwNm3a2Pr169N4LwAAAIDsKd2DiunTp9vAgQNt2LBhtnz5cqtbt661bdvWdu/eHXP++fPnW9euXa137962YsUK69ixo3t9++23oXlGjRpl48aNs0mTJtmiRYusUKFCbpl//vnnadwzAAAAIHvI4SlbPx2pZKJx48Y2fvx49/7EiRNWsWJF69evnw0ePPik+Tt37myHDh2yDz74IDTt/PPPt3r16rkgQrtTvnx5u/vuu+2ee+5xn+/fv9/KlCljU6ZMsS5dupxymw4cOGBFixZ13ytSpIilh4TBH6bLegFkb5tHdkjvTcjQeDYDyG7P5gPJTBena0nF0aNHbdmyZa56UmiDcuZ07xcsWBDzO5oePr+oFMKff9OmTbZz586IeXQgFLwktkwAAAAAqZfb0tHevXvt+PHjrhQhnN6vW7cu5ncUMMSaX9P9z/1pic0T7ciRI+7lUyTmR2bp5cSRw+m2bgDZV3o+9zIDns0Astuz+cD/v+5TVW5K16AioxgxYoQ99NBDJ01XNSwAyE6Kjk3vLQAAZMRn88GDB13tnwwZVJQqVcpy5cplu3btipiu92XLlo35HU1Pan7/f01T70/h86jdRSxDhgxxjcV9atfx66+/WsmSJS1HjhwB9hBInxwFBcTbtm1LtzZBAID/w3MZmZlKKBRQqM1yUtI1qMibN681bNjQ5s6d63pw8hP0en/HHXfE/E6zZs3c53feeWdo2pw5c9x0qVSpkgssNI8fROhmVi9Qffv2jbnMfPnyuVe4YsWKxW0/gfSggIKgAgAyDp7LyKySKqHIMNWfVELQo0cPa9SokTVp0sTGjh3renfq2bOn+7x79+5WoUIFV0VJBgwYYK1atbInnnjCOnToYNOmTbOlS5fa888/7z5XyYICjkcffdSqVavmgowHH3zQRVd+4AIAAAAgftI9qFAXsXv27HGD1akhtUoXZs2aFWpovXXrVtcjlO+CCy6wqVOn2gMPPGD333+/CxxmzJhh5513XmieQYMGucDklltusX379lnz5s3dMjVYHgAAAIAsNk4FgPhST2Yq2VNboehqfQCA04/nMrIDggoAAAAAgaTr4HcAAAAAMj+CCgAAAACBEFQg0/r73/8e0bXw6XbTTTdF9CiW3tvj02j0559/vuuYQB0fbN682fWKtnLlykS/M2/ePDePOjbwqQOEqlWrurFkTrVfU6ZMoRtmAKeVOne55JJLrFChQlnm+RPrWXy6f8syy3Yj40n33p+ArOKdd96xPHnynNYfAj3AlfgPN2zYMPcj+/3331vhwoXdj+2OHTvcYJMpceutt7qunfv3729nnHFGnLceQGakzBNlVqj79/T21FNPuWebMkyS04d+dqcMJnWzv2LFiojBgJ9++mk3uBkQFEEFECclSpTIEMdy48aNbgyXs88+OzQtsRHqE/P777/b7t27rW3btqccQfN0Onbs2GkN3ACkjBKnx48ft9y5c5+WZ50G0FXX8ql19OhRNxBvVn+GaT8TQ0CGeKH6EzK1v/76y42+roeicuI10KGf4/Lqq6+6QRWVy65E9fXXX+8Syr7ffvvNbrjhBitdurQVKFDA/TC99NJLoc+3bdtmnTp1cjn9ChiuvPJKl9OTmOjqTwkJCfbYY49Zr1693DacddZZoUEaU7sO3/Dhw+3ll1+29957zxU56+UXPy9btswefvhh97fmi1X9aebMmVa9enW33xdddFHEOrUcv2Ti4osvDi07pSZOnGhVqlRxP9jnnHOOOx/R1bQ0hoyqadWsWdM++eQTty6/5MXf7unTp7sBLzXf66+/7j77z3/+YzVq1HDTzj33XHv22Wcjlj1//nyXE6fPdQ1omaeqAgbg1KWjn3/+ucvZ9p87qvqo/z/66COXwFc31l999ZVL8Ot5pjGnVGLauHFjd4+HO9UzUglhPd/LlSvn7mVllPgD4eq7b7/9tr3yyitu/do2f2wrrVfr1OjVer7u2rUrtEw9E/Vs0DNEufb++FVaxnPPPWeXXXaZFSxY0D1fFixYYBs2bHDPdpX+apws7Vc4PYMbNGjgllO5cmV76KGH3O+ST8vVs/CKK65wy/j3v/+drMvs66+/tjp16rjlqjrrt99+G/G5jnGLFi3cM7xixYquRFnjc4Uf20ceecQNIKzjoHG7tL9Sv359t13ar8Sq8vbr18/9nhUvXtydwxdeeCE0MLHOlarG6pynZLt/+eUX69q1qxvQWMe4du3a9sYbb5x0TUSXgul86bwhE9A4FUBm1KpVK69w4cLegAEDvHXr1nmvvfaaV7BgQe/55593n7/44ovezJkzvY0bN3oLFizwmjVr5rVv3z70/dtvv92rV6+et2TJEm/Tpk3enDlzvPfff999dvToUa9GjRper169vNWrV3tr1671rr/+eu+cc87xjhw54ubp0aOHd+WVV0Zsj7bFd/bZZ3slSpTwJkyY4K1fv94bMWKElzNnTretyV1HYg4ePOh16tTJa9eunbdjxw730nf0f61atby7777b/a35tG+61VesWOG+u3XrVi9fvnzewIEDQ8etTJkybp7ffvvNLef77793799+++3QspPy0ksveUWLFg29f+edd7w8efK4fdeynnjiCS9Xrlzep59+6j7/66+/3H5ecskl3sqVK70vv/zSa9KkiVvnu+++6+bxtzshIcFtx48//uht377dbW+5cuVC0/S/jvOUKVPc9/bv3+/ed+vWzVuzZo27BqpXrx5xDACk3L59+9xztE+fPqHnzieffOLurTp16ngff/yxt2HDBu+XX35x9/WkSZO8b775xvvhhx+8Bx54wMufP7+3ZcuWZD8jR48e7VWsWNH74osvvM2bN7vnxNSpU91nu3fvds8/PQe1Hdq248ePu2d68+bNvaVLl3oLFy70GjZs6J7NvmHDhnmFChVy312+fLm3atUqN137UKFCBW/69OnumdWxY0f37Ln44ou9WbNmuefz+eef777n03YVKVLEPXv0O6P913eGDx8emkfLPfPMM73Jkye7ecL3P5bPPvvMfUe/DVqefhsuu+wyt1z9ZoiOsfbhqaeecsf266+/9urXr+/ddNNNEcdW2zZmzBg3v16LFy92y9Y50zHTeUrst+yMM87wHnnkEbd8/a/nt34/9fuqaX379vVKlizpHTp0KNnb/dNPP7lzquewjsW4cePcchctWhSx3dqvcHXr1nXnDRkfQQUyLT349AA7ceJEaNp9993npsWi4EEPPSW05fLLL/d69uwZc95XX33VJXrDl62EdYECBbzZs2cnO6hQwtanZenHZeLEicleR1Ki15/YAzg6qBgyZIhXs2bNiO/ouPlBheh/vdcPRXJEBxUXXHCBS3iEu+6667x//OMf7u+PPvrIy507t/th8ymoixVUjB07NmI5VapUCSUsfPrRU2JHdHz1Y/fHH3+EPn/hhRcIKoA4iH7O+YnJGTNmnPK7yvB45plnkv2M7Nevn0vUhz8jw+n5p+egT4lZJVKVceJTxoK2Twlq0bNRGR4KSsJpHgU+PmVEaZoyp3xvvPGGC4x8rVu39h577LGI5ei5rkyP8OXeeeedXnL5x3PatGmhaUr863dBAY/07t3bu+WWWyK+p4BLAZn/3NOxVWAULvq3wBfrt0yBmU+ZQApibrzxxtA0Pbu1LB2n5G53LB06dHCZYD6CisyN6k/I1FS8qmJcX7NmzWz9+vWuTq+qAV1++eWuSF3FtapC4xePS9++fW3atGmuaHXQoEGuyoxv1apVrthb31Mxul6qnvTnn3+eVPydFBUD+7SdqoblV8GK1zpS6rvvvrOmTZtGTNNxi/c6Lrzwwohpeq/pokbkKrIPb+vRpEmTmMtS9SWfit91bHr37h06Zno9+uijoWOmZfvF76daNoD4CL9P/XZZ99xzj6tGpOqduk91//vP3+Q8I1UtR1UWVX1S1Xs+/vjjJLdBy9dzRS+fqlZq/f6zR1SNStVeo4Vvi6r8iKrohE/T8/nAgQOhZ7iqmoY/i/r06eMajx8+fDjRY5Mc4c9k/S7oGPj7oPWq2ln4etX+7cSJE7Zp06ZA6/WFHwv1AFiyZMmTjoWEVyk+1Xbrd1lVsrQcfabtnj179knXBDIvGmojS9KDXw9ZvVQPXz8genDpvd9grX379rZlyxbXvmDOnDnWunVru/32223MmDHuB1H1g/06/OFi/RglJrpBnn409eCXeK0jq1M9ZJ+Omah+b3RgpB8+AOl/n4oCCj1X9TxV/XvV/b/22mtPajCc1DNSbRWUSFbdfbXHUPuINm3a2FtvvRXXbY21LX5mVaxp4c9wtaG4+uqrT1pWeKZGYutLLa1XvfMp0IqmTLR4rDfWeUnqWCTH6NGjXXsctZlQYKHtU7uN8GsiZ86cJ/VEpcbtyBwIKpCpLVq0KOL9woULXYNrNQJWo7CRI0eGcq2WLl0aM/Heo0cP91Kjt3vvvdf9COrHTA2EzzzzTNfILS0EXYcaQCvnJ6WUc/j++++fdNziSetQgz0dV5/eK9dQlHulRupqQOnneC1ZsuSUy9W86o3qxx9/dI3sY9GyX3vtNTty5IhrNJrcZQOI33NH97tKGq666qpQQjg5nVBE07Oxc+fO7qWgpF27dvbrr7/G7G1Pzx09V/Tyn/tr1651XW/7z554P8NVMqqgKd70TPYDBHUq8sMPP7j989er/Urpev1erlLzuxGP7dY1oUb03bp1CwUk+jz83Og3WSU9PpUKhZe+IGOj+hMyNZU+DBw40D3Y1YvEM888YwMGDHAPNT1A9V4JUCWiVewabujQoa7nDlVBWrNmjX3wwQehh58SrOpNSg/AL7/80j3U1AOScoZ++umnuGx70HWol4zVq1e7fd+7d2+yc3P++c9/uipiCqD03alTp7qi9HjSsrVM9XqidT355JNuHA/lXooGrFLPUAo6tA/6sXnggQfcZ+HV2WJRzqB6gBk3bpz7Qfrmm29cr11ah6iXL/1YqbcTFbureF2BYnKWDeDUzx1l5ihA0HMnsZxqZe7onlf1JVXX8e/LlNA9ree6Mol0r7/55puuelRiA92pFEM54Hq2Ll++3BYvXux6P1LV1yBVgRKj3xD1PqVnkn5D9LxRlVr/WRaEqlXNnTvX9Z6k4Ey/FX4PTffdd5+rrquesXR89YzVb5neJ0UZWCoxmjVrlsvQ2b9/f+DtTMl265pQ6ZW2XcdKpS3hPXP5PQ6qp0D9JurZrt8ISqEzD4IKZGr6wfjjjz9cnXlVXVJAocSkcjuUqNWPkHJBVGLhJyx9CjqGDBni6o62bNnSPbj0gyDq7u6LL75wwYmKthVsqB6/qlXFq+Qi6DpUd1e58vqx1P4qYZ4cWp+6YlQ3q3Xr1rVJkya5bh3jST8iKubWMa9Vq5brqlEJf78LQx1rrV+5l+pq8uabb7Z//etfJ1UbiEXzqjtILU8JCCUYdK797hJ17P73v/+5H1u1l9Fy9eOfnGUDSJoyBnT/6rnqVytNLCBQd6TqhlVt21T1VDnsKaH2ZqNGjXLPOD0nFMiouqqqyMSiTAMlrrVePdMVZKibV5UIpwXtkzKj1NZD26c2fhqQL3yMoNTSb5Z+z1RFViOH65nmlzToN0td+yrQUgm7uojVM+5UYwpp7BBlxuh5rHmVoRVvSW23gi1dAzpu+i1QgBg9krd+k/VMV9e+Gm9JnysDCplDDrXWTu+NAAAFRRq3QiVH8f4RUbsV9a+unDnl1AEAgPiiTQWAdPHuu++63j9UJK5AQrlb6iEqHgGFqiQoh1KDLKnqhaoLqJEnAQUAAGmD6k9ABhXeXWD0S/VNTyf1lJXYtqS26tTBgwddlTWNiK26t6o+oKoL8aBidzUGVJWyu+66y6677rqTRjMHgNNNbdoSe5bqMyAzo/oTkEEp9z4xyoE/nbnuP//8s2u7Eot6YYnVEwsAIJLGdfDHuYim9mBqTA1kVgQVAAAAAAKh+hMAAACAQAgqAAAAAARCUAEAAAAgEIIKAAAAAIEQVAAAMqx58+a5kZL37duX7O8kJCTY2LFj03S7AACRCCoAAKmmMUaU6I/Vx77GIdFnmgcAkLURVAAAAqlYsaJNmzYtYiyTP//806ZOnWpnnXUWRxcAsgGCCgBAIA0aNHCBxTvvvBOapr8VUNSvXz807ciRI9a/f383wFf+/PmtefPmtmTJkohlzZw506pXr+4Gd7zooots8+bNJ63vq6++shYtWrh5tF4t89ChQ4lu39atW+3KK690oxZrgLFOnTrZrl27OOsAEEcEFQCAwHr16mUvvfRS6P3kyZOtZ8+eEfMMGjTI3n77bXv55Zdt+fLlVrVqVWvbtq39+uuv7vNt27bZ1VdfbZdffrmtXLnSbr75Zhs8eHDEMjZu3Gjt2rWza665xlavXm3Tp093QcYdd9wRc7tOnDjhAgqt4/PPP7c5c+bYjz/+aJ07d+asA0AcEVQAAALr1q2bS9xv2bLFvb7++ms3zaeShIkTJ9ro0aOtffv2VrNmTXvhhRdcacOLL77o5tHnVapUsSeeeMLOOeccu+GGG05qjzFixAg3/c4777Rq1arZBRdcYOPGjbNXXnnFVbmKNnfuXPvmm29cVayGDRta06ZN3bwKMKJLSQAAqZc7wHcBAHBKly5tHTp0sClTppjnee7vUqVKRZQwHDt2zC688MLQtDx58liTJk3su+++c+/1vxL94Zo1axbxftWqVa6E4vXXXw9N0/pUIrFp0yarUaNGxPxapqpI6eVTQFOsWDH3WePGjTmDABAHBBUAgLhVgfKrIU2YMCFNjurvv/9ut956q2tHEY1G4QCQfqj+BACIC7V1OHr0qCuRUFuJcKrWlDdvXlctyqf5VAVJJQeiUobFixdHfG/hwoUnNQpfu3ata48R/dLyo2mZaquhl0/f17gX/noBAMERVAAA4iJXrlyuSpES7fo7XKFChaxv375277332qxZs9w8ffr0scOHD1vv3r3dPBrrYv369W6e77//3rWDUHWqcPfdd5/Nnz/flYioMbfmf++99xJtqN2mTRurXbu2a4ehxuEKWrp3726tWrWyRo0aceYBIE4IKgAAcaMuW/WKZeTIka7XphtvvNGVOGzYsMFmz55txYsXD1VfUu9QM2bMsLp169qkSZPssccei1hGnTp1XCPrH374wXUrqy5rhw4dauXLl4+5Tg2+p6BD62jZsqULMipXrux6jQIAxE8OTy3cAAAAACCVKKkAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAgRBUAAAAACCoAAAAAJB+KKkAAAAAEAhBBQAAAIBACCoAAAAABEJQAQAAACAQggoAAAAAFsT/A/CUQOPzqyf4AAAAAElFTkSuQmCC"/>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 8 — Persistência dos artefatos do modelo avançado</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Objetivo da seção</strong><ul>
+<li>Salvar os principais artefatos produzidos no experimento transformer.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Ações realizadas</strong><ul>
+<li><em><strong>Salvamento do tokenizer</strong></em></li>
+<li><em><strong>Salvamento do modelo</strong></em></li>
+<li><em><strong>Persistência das métricas</strong></em></li>
+<li><em><strong>Persistência da comparação com baseline</strong></em></li>
+<li><em><strong>Persistência das previsões do teste</strong></em></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Justificativa técnica</strong><ul>
+<li>Persistir os artefatos garante reprodutibilidade, rastreabilidade e integração futura com API e monitoramento.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Resultados esperados</strong><ul>
+<li>Modelo e tokenizer salvos</li>
+<li>Resultados do experimento persistidos</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">trainer.save_model(str(OUTPUT_DIR))
+tokenizer.save_pretrained(str(OUTPUT_DIR))
+
+transformer_metrics_path = REPORTS_DIR / "transformer_test_metrics.csv"
+transformer_report_path = REPORTS_DIR / "transformer_test_classification_report.csv"
+transformer_predictions_path = REPORTS_DIR / "transformer_test_predictions.csv"
+comparison_path = REPORTS_DIR / "baseline_vs_transformer_comparison.csv"
+transformer_metadata_path = TRANSFORMER_MODELS_DIR / "transformer_metadata.json"
+
+transformer_test_metrics_df.to_csv(transformer_metrics_path, index=False)
+transformer_test_class_report.to_csv(transformer_report_path)
+transformer_test_predictions_df.to_csv(transformer_predictions_path, index=False)
+comparison_df.to_csv(comparison_path, index=False)
+
+transformer_metadata = {
+    "project": "nlp-triagem-inteligente-financeira",
+    "model_family": "Transformer",
+    "checkpoint": MODEL_CHECKPOINT,
+    "text_column": TEXT_COL,
+    "target_column": TARGET_COL,
+    "max_length": MAX_LENGTH,
+    "n_labels": int(N_LABELS),
+    "train_shape": list(train_gold.shape),
+    "valid_shape": list(valid_gold.shape),
+    "test_shape": list(test_gold.shape),
+    "valid_metrics": valid_metrics,
+    "test_metrics": transformer_test_metrics,
+}
+
+with open(transformer_metadata_path, "w", encoding="utf-8") as f:
+    json.dump(transformer_metadata, f, ensure_ascii=False, indent=2)
+
+print("Artefatos do transformer salvos com sucesso.")
+print(transformer_metrics_path)
+print(transformer_report_path)
+print(transformer_predictions_path)
+print(comparison_path)
+print(transformer_metadata_path)</code></pre>
+</div>
+<div class="output-text">
+<pre>Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]</pre>
+                        </pre></div>
+<div class="output-stream">
+<pre>Artefatos do transformer salvos com sucesso.
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports\transformer_test_metrics.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports\transformer_test_classification_report.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports\transformer_test_predictions.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\artifacts\reports\baseline_vs_transformer_comparison.csv
+D:\_DS-Projects\nlp-triagem-inteligente-financeira\models\transformer\transformer_metadata.json
+</pre>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="4"><strong>✔️ Seção 9 — Leitura executiva do modelo avançado</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li><strong>Síntese da etapa</strong><ul>
+<li>O transformer foi treinado para medir ganho real sobre o baseline clássico em uma tarefa multiclasses de FAQ financeira em português.</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Leitura analítica</strong><ul>
+<li>A principal hipótese desta etapa é que o modelo contextual consiga lidar melhor com:<ul>
+<li>proximidade semântica entre categorias</li>
+<li>variações linguísticas</li>
+<li>dependência de contexto além de frequência de termos</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><strong>Valor para o projeto</strong><ul>
+<li>Com esta etapa, o projeto passa a demonstrar:<ol>
+<li>baseline clássico bem construído</li>
+<li>modelo avançado contextual</li>
+<li>comparação objetiva entre abordagens</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="3"><strong>📌 Próximo passo do projeto</strong></font></p>
+<font color="#66666" size="2">
+<blockquote>
+<ul>
+<li>No <strong>Notebook 06 — Evaluation &amp; Business Interpretation</strong>, vamos consolidar:<ul>
+<li>leitura comparativa entre baseline e transformer</li>
+<li>implicações técnicas</li>
+<li>interpretação de negócio</li>
+<li>recomendação de modelo para deployment inicial</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<hr/>
+<p></p></font></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Markdown Cell" class="markdown" role="region">
+<div style="background-color:#f3f2ee">
+<p><font color="#CC403E" size="6"><strong>Fim</strong></font></p>
+<p><font color="#66666" size="3"></font></p></div>
+</div>
+</div>
+<div class="cell">
+<div aria-label="Code Cell" class="code_cell" role="region">
+<pre><code class="language-python">#!uv pip install nbconvert -U -q
+!jupyter nbconvert --to html --template-file my-template-html-v10.tpl 05_modeling__tranformer_text_classifier.ipynb</code></pre>
+</div>
+</div>
+<div class="footer">
+<p>RobertoSSoares-LfLngLrnng — <span id="datetime"></span></p>
+</div>
+<script>
+            document.getElementById("datetime").innerText = new Date().toLocaleString('pt-BR');
+        </script>
+</div>
+</body>
+</html>
