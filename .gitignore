@@ -62,7 +62,8 @@ data/04-inference/*
 !data/04-inference/.gitkeep
 
 # Notebook
-notebook/x*.ipynb
-notebook/*.tpl
+notebooks/x*.ipynb
+notebooks/*.tpl
  
+
 
