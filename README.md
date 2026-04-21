@@ -430,7 +430,7 @@ Mostra **método, maturidade analítica, visão de produto e prontidão para dep
 **Roberto dos Santos Soares**  
 Profissional de Dados | BI | Analytics | Data Science | Engenharia de Dados  
 [LinkedIn](https://www.linkedin.com/in/roberto-dos-santos-soares/)  
-[Portfólio](https://roberto-ssoares.github.io/meu-portfolio/)
+[Portfólio de Projetos em Dados](https://roberto-ssoares.github.io/meu-portfolio-hub/)
 
 ---
 
