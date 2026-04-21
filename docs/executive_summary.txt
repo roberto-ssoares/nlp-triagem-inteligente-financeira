@@ -1,0 +1,4 @@
+Projeto de NLP aplicado ao domínio financeiro para classificação multiclasses de perguntas e demandas textuais.
+A solução foi estruturada com CRISP-DM+, incluindo Ontologia, BLM, preparação em camadas e comparação entre baseline e transformer.
+O baseline TF-IDF + Logistic Regression apresentou melhor desempenho e foi escolhido para o deployment inicial.
+O experimento transformer foi mantido como trilha futura de evolução, após diagnóstico de colapso para classe dominante na formulação atual.
